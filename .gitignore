@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+**/.venv/
+venv/
+env/
+ENV/
+
+# Tool and test caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Local editor/project state
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Local env/secrets
+.env
+.env.*
+!.env.example
+!.env.service.example
+
+# Logs/runtime files
+*.log
+dataconnect-debug.log
+dump.rdb
+
+# Build/distribution
+build/
+dist/
+*.egg-info/
+
+# Guard/prototype generated outputs and model artifacts
+guard_outputs/
+**/guard_outputs/
+service_data/
+**/service_data/
+training_runs*/
+**/training_runs*/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Datasets and local training media
+data/
+dataset/
+datasets/
+**/dataset/
+**/datasets/
+**/*_dataset/
+guard_binary_dataset/
+hate_videos/
+non_hate_videos/

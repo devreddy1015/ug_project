@@ -1,0 +1,36 @@
+Alternative architecture (event-driven, async)
+
+Overview
+- Goal: Increase scalability, reliability, and cost control for multi-modal explicit-content detection.
+- Core idea: Separate ingestion from processing using queues and workers.
+
+Main flow (request to response)
+1) Client authenticates with API Gateway.
+2) Upload service accepts content and stores it in Object Storage.
+3) Metadata service records job details in a Job Store and publishes a job message to Ingest Queue.
+4) Orchestrator consumes Ingest Queue and routes by modality to dedicated Worker Queues.
+5) Modality workers run preprocessing and inference:
+   - Text Worker  -> Text Preprocess -> LLM Scoring
+   - Image Worker -> Image Preprocess -> Vision/LLM Scoring
+   - Video Worker -> Video Preprocess -> Frame/Clip Scoring -> Aggregate
+   - Audio Worker -> Audio Preprocess -> ASR/Audio Scoring -> Aggregate
+6) Results Aggregator consolidates scores, applies thresholds, and writes to Results Store.
+7) Notification service posts a webhook or allows polling via Results API.
+
+Data stores
+- Object Storage: raw files, temporary artifacts.
+- Job Store: job state, retries, metadata, SLA timestamps.
+- Results Store: final scores, model versions, audit records.
+
+Operational components
+- Rate limiter + circuit breaker for LLM calls.
+- Retry policy with idempotency keys per job.
+- Observability stack: metrics, traces, structured logs.
+
+Thoughts and rationale
+- Strengths: Non-blocking API, easy horizontal scaling, resilient to spikes, clear failure isolation.
+- Tradeoffs: More services to manage; higher operational complexity.
+- Cost control: Scale workers by queue depth; separate GPU pools for image/video.
+- Security: Enforce upload validation, malware scanning, encryption at rest/in transit.
+- Quality: Model versioning in Results Store enables regression tracking and audits.
+- Best fit: Production workloads with large media and unpredictable traffic.
