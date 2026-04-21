@@ -1,0 +1,57 @@
+flowchart LR
+    subgraph Clients
+        UI[Streamlit UI]
+        CLI[CLI Analyzer]
+        APIClient[External API Client]
+    end
+
+    UI --> API
+    CLI --> API
+    APIClient --> API
+
+    subgraph Service Layer
+        API[FastAPI Gateway]
+        Jobs[(SQLite Job Store)]
+        Files[(Input Storage)]
+        Redis[(Redis Broker/Backend)]
+    end
+
+    API --> Jobs
+    API --> Files
+    API --> Redis
+
+    subgraph Worker Layer
+        Celery[Celery Workers]
+        QText[Text Queue]
+        QImage[Image Queue]
+        QVideo[Video Queue]
+        QAudio[Audio Queue]
+    end
+
+    Redis --> QText
+    Redis --> QImage
+    Redis --> QVideo
+    Redis --> QAudio
+
+    QText --> Celery
+    QImage --> Celery
+    QVideo --> Celery
+    QAudio --> Celery
+
+    subgraph Analysis Pipeline
+        Extract[Multimodal Extraction]
+        Score[Dual Scoring\nLLM + Embeddings + Keywords]
+        Risk[Risk + Policy + Confidence Engine]
+        V2[Guard V2 Video Pipeline]
+    end
+
+    Celery --> V2
+    Celery --> Extract
+    V2 --> Score
+    Extract --> Score
+    Score --> Risk
+
+    Risk --> Results[Results API/UI/CSV JSON/Webhooks]
+    Risk --> Jobs
+
+    API --> Health[Health/Readiness/Metrics/Logs]
