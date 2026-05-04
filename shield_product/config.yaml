@@ -1,0 +1,25 @@
+guard:
+  thresholds:
+    safe: 35.0
+    review: 55.0
+    block: 80.0
+    network_block: 75.0
+  fusion:
+    use_learned: true
+    model_path: training/v2/fusion_head.joblib
+    blend_weight: 0.35
+    fallback_weights:
+      text: 0.40
+      image: 0.22
+      audio: 0.18
+      video: 0.20
+  extraction:
+    frame_count: 8
+    keyframe_interval_seconds: 2.0
+    enable_whisper: true
+    enable_ocr: true
+  models:
+    sentence_transformer: all-MiniLM-L6-v2
+    hate_classifier: cardiffnlp/twitter-roberta-base-hate
+    clip_model: openai/clip-vit-base-patch32
+    whisper_model: tiny

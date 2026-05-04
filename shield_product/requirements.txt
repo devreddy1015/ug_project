@@ -1,0 +1,16 @@
+streamlit==1.38.0
+pandas==2.2.2
+numpy==2.1.1
+pillow==10.4.0
+PyYAML==6.0.2
+fastapi==0.115.0
+uvicorn==0.30.6
+celery[redis]==5.4.0
+python-multipart==0.0.9
+pydantic==2.9.2
+requests==2.32.3
+transformers==4.44.2
+scikit-learn==1.5.2
+joblib==1.4.2
+sentence-transformers==3.0.1
+openai-whisper==20231117

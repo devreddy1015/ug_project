@@ -1,0 +1,17 @@
+{
+  "body_shaming": ["body", "fat", "ugly", "overweight", "appearance", "skinny"],
+  "child_abuse_and_exploitation": ["child", "minor", "abuse", "exploitation", "underage"],
+  "cyberbullying": ["bully", "bullying", "online", "harass", "troll", "threat"],
+  "harassment": ["harass", "abuse", "threat", "intimidate", "stalk"],
+  "hate_speeches": ["hate", "inferior", "supremacy", "discriminate", "racist", "bigot"],
+  "homophobic_content": ["homophobic", "gay", "lesbian", "lgbt", "queer", "slur"],
+  "invasive_privacy_violation": ["private", "dox", "doxx", "leak", "address", "phone"],
+  "misinformation_and_fake_news": ["fake", "hoax", "rumor", "misinformation", "conspiracy"],
+  "racial_slurs": ["slur", "racial", "racist", "ethnic", "supremacy"],
+  "self_harm_and_suicide": ["self-harm", "suicide", "cutting", "kill", "hurt"],
+  "sexist_content": ["sexist", "misogyny", "misogynistic", "gender", "woman"],
+  "sexually_explicit_material": ["sex", "explicit", "nudity", "porn", "adult"],
+  "substance_abuse": ["drug", "substance", "abuse", "addiction", "overdose"],
+  "transphobic_content": ["transphobic", "transgender", "trans", "slur"],
+  "violence_and_terrorism": ["violence", "attack", "weapon", "terrorism", "assault"]
+}
