@@ -1,0 +1,35 @@
+Figure 16. Proposed industry ready architecture (text version)
+
+Overview
+- Purpose: Identify and rank explicit material using an LLM-based pipeline across text, image, video, and audio.
+- API type (as described): Secured API gateway for authentication, plus a central Gateway API to coordinate requests and initiate the pipeline.
+
+Main flow (request to response)
+1) Client submits content.
+2) API Authentication validates access and produces an Authenticated Client.
+3) Gateway API receives the request.
+4) Gateway API forwards to API Request.
+5) API Request initiates the Pipeline.
+6) Pipeline loads file and performs Categorization.
+7) Categorization routes content by modality:
+   - Text  -> Text Preprocessor  -> Text Processor
+   - Video -> Video Preprocessor -> Video Processor
+   - Image -> Image Preprocessor -> Image Processor
+   - Audio -> Audio Preprocessor -> Audio Processor
+8) Each processor feeds LLM Scoring (LLM provides model for scoring).
+9) LLM Scoring outputs Results to Results Processing.
+10) Results Processing generates a Formatted Response.
+11) Formatted Response goes to API Response.
+12) API Response returns to Gateway API, then back to the Client.
+
+Data storage path
+- API Request stores the file in File Store.
+- File Store persists to Cloud Database.
+- Pipeline retrieves the file from File Store when processing.
+
+Key labeled interactions from the figure
+- "Initiates Pipeline" from API Request to Pipeline.
+- "Loads File" from Pipeline to Categorization.
+- "Initiates Scoring" from Categorization to LLM Scoring.
+- "Results" from LLM Scoring to Results Processing.
+- "Formatted Response" from Results Processing to API Response.

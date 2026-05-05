@@ -38,6 +38,8 @@ dist/
 # Guard/prototype generated outputs and model artifacts
 guard_outputs/
 **/guard_outputs/
+evaluation_outputs/
+**/evaluation_outputs/
 preprocess_outputs/
 service_data/
 **/service_data/

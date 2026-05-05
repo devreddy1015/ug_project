@@ -29,6 +29,28 @@ def _save_json(path: Path, payload: Dict[str, object]) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+def _save_csv_from_dict(path: Path, payload: Dict[str, object]) -> None:
+    import csv
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Key", "Value"])
+        for k, v in payload.items():
+            if isinstance(v, (dict, list)):
+                writer.writerow([k, json.dumps(v)])
+            else:
+                writer.writerow([k, v])
+
+
+def _save_csv_from_list_of_dicts(path: Path, rows: List[Dict[str, object]]) -> None:
+    if not rows:
+        return
+    import csv
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def _random_split_indices(total_size: int, val_split: float, seed: int) -> Tuple[List[int], List[int]]:
     if total_size <= 1:
         return [0], [0]
@@ -472,10 +494,14 @@ def main() -> None:
     }
 
     _save_json(output_dir / "run_summary.json", run_summary)
+    _save_csv_from_dict(output_dir / "run_summary.csv", run_summary)
+    
     _save_json(output_dir / "metrics_history.json", {"history": history})
+    _save_csv_from_list_of_dicts(output_dir / "metrics_history.csv", history)
 
     if args.multi_label:
         _save_json(output_dir / "label_map.json", {"categories": categories})
+        _save_csv_from_dict(output_dir / "label_map.csv", {"categories": categories})
 
 
 if __name__ == "__main__":

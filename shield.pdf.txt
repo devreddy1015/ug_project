@@ -1,0 +1,2667 @@
+Received 7 February 2026, accepted 19 February 2026, date of publication 23 February 2026, date of current version 26 February 2026.
+Digital Object Identifier 10.1109/ACCESS.2026.3667099
+
+SHIELD: System for Harmful Explicit-Content
+Identification and Evaluation Through
+LLM-Driven Approach
+DISHANT KAPOOR 1 , KARAN AHUJA 1 , DEEPIKA KUMAR 1 , PAANAV PURI 1 ,
+SRINIVAS JANGIRALA 2 , (Member, IEEE), VEDIKA GUPTA2 , AND ANANDADEEP MANDAL
+
+3
+
+1 Department of Computer Science and Engineering, Bharati Vidyapeeth’s College of Engineering, New Delhi 110063, India
+2 Jindal Global Business School, O. P. Jindal Global University, Haryana 131001, India
+3 Birmingham Business School, University of Birmingham, B15 2TT Birmingham, U.K.
+
+Corresponding author: Anandadeep Mandal (a.mandal@bham.ac.uk)
+
+ABSTRACT The surge in access to explicit content across various platforms has sparked major concerns, yet
+existing content filtering systems find it difficult to analyze different media formats leading to the spread of
+unchecked dissemination of harmful content. To tackle these shortcomings, the authors proposed SHIELD,
+which is an optimized end-to-end pipeline to detect & analyze explicit content, using a large-languagemodel (LLM) driven approach. SHIELD processes multi media inputs by segregating and preprocessing
+them, followed by converting all formats into text through advanced models, extracting meaningful textual
+context and subjecting the resulting data to two parallel evaluation mechanisms: an LLM-based classifier for
+contextual analysis, and a semantic vector-based scoring system for quantitative measurement. Explicitness
+classifications are output in a JSON format, which allows easy integration into real-world systems. When
+benchmarked against a manually curated ground truth dataset, the LLM-based system surpasses vector-based
+approach, with an accuracy of 93.32%, as against 67.81%. The pipeline shows robustness across all media
+types and file sizes, confirming its viability as a scalable, context-aware solution.
+INDEX TERMS Explicit content detection, large language model (LLM), vector embeddings, content
+moderation, multimodal content analysis.
+I. INTRODUCTION
+
+With the quick and uncontrolled spread of explicit content
+on the internet, a serious societal problem arises. While the
+internet provides endless avenues to information and global
+connectivity, it simultaneously facilitates the widespread
+dissemination of harmful and explicit content. Much of
+the exposure is unintentional, especially for children and
+teenagers, a situation worsened by the enormous amount
+of digital content created every day and the inadequacy of
+traditional filtering mechanisms. Psychological and social
+effects of such exposure are much profound and require
+careful analysis.
+Studies show that even incidental exposure to explicit content can sensitize adolescents to violence and
+inappropriate behavior, with correlations between such
+The associate editor coordinating the review of this manuscript and
+approving it for publication was Yizhang Jiang
+
+VOLUME 14, 2026
+
+.
+
+exposure and heightened anxiety, depression, and aggressiveness [1], [2]. Such exposure skews norms in development and
+has a detrimental effect on social attitudes and behaviors.
+Empirical evidence emphasizes the magnitude of the
+problem, with research proposing one in five children are
+exposed to explicit material by the age of 12, more often
+because of a lack of adequate control measures and degrees
+of parental supervision [3]. Adding to this issue, evidence
+shows a 40% increase in sharing self-harm content over
+the last five years, further risking vulnerable young people
+facing mental health issues [4]. With worldwide internet
+penetration to a whopping 4.9 billion users, the risk of this
+harm is growing, and there is an urgent need for effective
+intervention. Technologies are being developed to counteract.
+Recent studies outline the ways advanced AI is able to
+significantly enhance content moderation:
+• Smarter Moderation: Franco et al. [5] demonstrate
+that using Large Language Models (LLMs) can make
+
+2026 The Authors. This work is licensed under a Creative Commons Attribution 4.0 License.
+For more information, see https://creativecommons.org/licenses/by/4.0/
+
+29493
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+content moderation on social networks both fairer and
+more efficient. Their proposed system doesn’t just
+remove content; it explains why, adding a crucial layer
+of transparency.
+• Detecting Profanity in Music: Murugan and Kalyan [6]
+developed a method that combines multiple AI techniques (TF-IDF, BERT, and Doc2Vec) to effectively
+identify profanity in English song lyrics. Their work
+shows this approach can be used to shield younger users
+from inappropriate audio content.
+• Catching Predators and Abuse: Nguyen et al. [7]
+proved that a fine-tuned LLM (Llama 2) is highly
+effective at detecting sexual predatory chats and abusive
+language, even in non-English texts. This is a major step
+forward for flagging harmful conversations in real-time.
+• Proven Effectiveness: Kumar et al. [8] found that
+models like GPT-3.5 are already competent at content
+moderation, achieving high precision in rule-based
+tasks. While they note performance is plateauing, LLMs
+still outperform many existing toxicity filters.
+These innovations are significant leaps forward. By leveraging LLMs, we can build more advanced systems to combat
+harmful content online.
+A proposed system for explicit content detection would
+handle various inputs: audio, video, and text. First, a content splitter would categorize the input. Audio would be
+transcribed into text, and all text would then be cleaned
+and prepared for analysis. This text is converted into
+numerical data (vector embeddings) that the systems can
+process. Video files would be checked for corruption and
+standardized.
+At the core, specialized LLMs would analyze the prepared
+text from audio and video sources. These models would
+perform sophisticated classification to identify different
+categories of explicit content, such as sexually explicit
+material or promotions of self-harm. The system would then
+calculate the percentage of the content that falls into each
+category, providing a detailed statistical breakdown. Finally,
+all these findings are synthesized into a clear, practical report
+for content analysis.
+The primary objectives of this research are:
+1. To develop a robust system capable of detecting explicit
+content across multiple media types, including audio,
+video, images, and text.
+2. To integrate different preprocessing and processing
+techniques for each media type, ensuring that the system
+can handle diverse input formats.
+3. To leverage large language models (LLMs) for nuanced,
+context-aware detection and scoring of explicit content
+as it moves through the pipeline.
+4. To benchmark the system’s performance by comparing
+it with traditional vector-based approach on realworld datasets ensuring, efficiency in detecting explicit
+content.
+
+29494
+
+The remainder of the paper is organized as follows.
+Section II reviews related work in this area. Section III
+presents the proposed methodology, while Section IV reports
+experimental results and analysis. Section V describes
+the industrial architecture. Section VI discusses ethical considerations and bias mitigation strategies, and
+Section VII addresses data management and privacy protection. Section VIII outlines deployment conditions, computational cost, and reproducibility. The paper concludes in
+Section IX, followed by an error analysis in Section X and
+appendices provided at the end.
+II. RELATED WORK
+
+Bhatti et al. [9] suggested an explicit-content detection
+framework that uses deep learning and natural language processing algorithms and aims at text, audio, and video data as
+input. Their method is based on modality-specific processing
+pipelines in which the media types are processed separately
+and then classified. Although successful in rough-grained
+explicit content detection, the framework has been shown
+to have constraints when dealing with fine-grained video
+representations and it also has no cross-modal semantic
+integration mechanisms, limiting its capability to discover
+implicit or context-dependent harmful features. In their
+paper, Caselli et al. [10] examined offensive words in
+implicit and explicit messages in linguistic as well as
+computational senses. They define explicit messages as easy
+to identify and implicit ones as more subtle and contextbased, highlighting the requirement of having big data and
+improved models, particularly when such cues must be
+inferred without explicit lexical markers. A research paper by
+MacAvaney et al. [11] discussed the issues of hate speech
+detection such as vagueness of definition, linguistic complexity and insufficient data. Although the proposed multi-view
+SVM improves interpretability, the approach remains limited
+in modeling deep contextual semantics, which are critical for
+implicit or multimodal abuse detection.
+Marcial-Basilio et al. [12] talked about methods of
+detecting explicit material in images using computational
+methodology. The study demonstrated how image processing
+and machine learning techniques such as convolutional neural
+networks could be used to identify and categorize explicit
+content with a high degree of accuracy under visually explicit
+conditions. The research also referred to some drawbacks
+such as difficulty in identifying context-specific content. The
+research highlighted the necessity of more refined algorithms
+and varied dataset to enhance the reliability and accuracy
+in explicit content identification. However, the approach
+remains constrained when contextual interpretation beyond
+visual cues is required. Vaglio et al. [13], highlighted a
+new approach for the analysis of explicit content in music
+via audio signalling. An audio-to-character identification
+model, a keyword-detection subsystem and random forest
+classifier had been used for the classification. The research
+was achieving an F1 score of 67% under controlled audio
+
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+TABLE 1. Literature review.
+
+conditions which implies that it can sense the explicit
+material directly via sound. Su et al. [14] used machine
+learning models to predict self-harm and suicide risk in
+teenagers. Random forest classifier has been used to identify
+depression, emotional issues, and school-related stress as key
+factors, showing ML models outperform simpler methods.
+The reliance on acoustic and lexical cues limits robustness
+against contextual or metaphorical expressions. Researchers
+in [15], discussed different machine learning methods like
+Naive Bayes, support vector machine, decision tree and
+neural networks, for identifying cyberbullying in social media
+posts. Based on the accuracy, precision, recall and F1 score,
+these methods are compared. It was observed that SVM
+and neural networks work better in detecting the cases of
+cyberbullying since they can process complex patterns and
+non-linear relationship within the data. In article [16], Abro
+et. al. assessed some word embedding models like Word2Vec,
+GloVe and FastText, for identifying English social media
+hate speech, its performance was compared with various
+classifiers such as SVM, random forest and naive bayes,
+it was concluded that FastText embeddings with random
+forest classifier proves optimal for this research. The findings
+of this research indicate that word embedding and classifier
+selection have a considerable effect on detection accuracy.
+The only limitation to this study is its lack of support to
+multi lingual hate speech detection, as it relies on pre-trained
+embeddings without considering the application of BERT,
+which could have strengthened the findings. The paper [17]
+discussed the advancements achieved by various machine
+learning methods for detecting hate speech on social media
+websites. It put forward the enhancements introduced by
+VOLUME 14, 2026
+
+deep learning models especially, the BERT, which increases
+detection accuracy. The authors highlighted the importance
+of considering contextual information. The significant limitation to this method is, the adversarial attacks somehow
+evade the detection system. In paper [18], Chin et al presented
+a method for detecting objectionable content in song lyrics
+using machine learning models. The authors contrasted their
+models, such as bagging and AdaBoost algorithms, with
+the standard dictionary methods and discovered that their
+bagging method combined with selective vocabulary and IDF
+score performed significantly better. The only limitation of
+this study was the scarcity of available datasets on the web,
+which constrained performance despite the potential to build
+a substantially stronger system for detecting explicit content
+in music lyrics. The research paper of Qiu et al [19] explores
+the problem of detecting pornographic content during humanmachine interactions, a problem that has been relatively
+unaddressed in the literature. The authors presented a dataset
+that consists of real-world dialogue sessions segmented into
+an individual word called CensorChat. This research presents
+a way of labelling and classifying the data to train the machine
+learning models where several open-source large language
+models (LLMs) are employed to produce preliminary labels
+for a dataset, with the ultimate label for every data point
+being decided by a majority vote of these models. ChatGPT
+is then employed to fine-tune the labels produced and then
+GPT4 is employed to guarantee accuracy. The study points
+out the employment of sophisticated language models in this
+field of identifying pornographic text. Paper [20], offered a
+framework to categorize the online suicide content into five
+levels of harmfulness. It employs LLMs and professional
+29495
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+feedback for benchmarking harmful content detection. GPT4
+attained an F1 score of 66.46 against illegal content and
+77.09 against harmful content. This research illustrated the
+necessity of automated tools to handle suicidal harmful
+content. Steel in the article [21] discussed AI usage in child
+sexual exploitation material (CSEM). It discusses the new
+developments and challenges in detecting CSEM content,
+detecting online grooming, and creating AI content. The
+research covers the concepts of matching, feature based
+identification and deep learning. It highlights the need for
+research on AI’s offensive and defensive use against CSEM.
+The summarized literature review is shown in Table 1. More
+recent developments have studied more complex multimodal
+and LLM-based moderation systems. Tang et al., in [28]
+suggested a risk-sensitive system, called VideoModerator,
+which combines visual signals, audio signals, and OCR
+signals to moderate e-commerce video listings, but is domainspecific, restricting the generalisation of its performance to
+larger harmful-content contexts. Koh et al. [29] proposed
+a paradigm to base language models on images and allow
+it to reason on the basis of multimodal inputs, however
+their solution is also limited to image-text fusion and
+does not cover the audio or video streams. Liang et al.,
+in [30] introduced an embedding-based retrieval technique
+to multimodal content moderation, which exploits vector
+similarity of text, images, and video frames; and in spite
+of being computationally efficient, the system is limited to
+the ability of embeddings to provide a richer representation
+and does not utilize deeper semantic reasoning. The recent
+research has been more concerned with the multi-modal
+identification of harmful content in videos. The approach proposed by Céspedes-Sarras et al. [31], termed the Mixed-Mode
+Hate Speech Detector, integrates speech transcripts with
+audio, video frames, and on-screen text using Cross-Modal
+Attention (CMA) in an early-fusion stage, followed by
+feature concatenation in a late-fusion step. Their model
+achieves the highest reported macro F1 score on the HateMM
+dataset and demonstrates that treating on-screen text as a
+query modality attending to other features yields the strongest
+performance. In comparison to SHIELD, which converts all
+media to textual context, then scores it with downstream
+LLMs and vectors, MM-HSD is highly dependent on
+video-based architectures and lacks a common pipeline when
+providing arbitrary files. Along with text-only contexts,
+Saddozai et al. [32] present MMHS11K, a multimodal,
+multilingual dataset of hate speech data comprising of
+11,000 annotated tweets with textual content and images
+and come up with a deep learning that concurrently models
+both modalities. Their findings emphasize that multimodal
+and multilingual indicators are much better in detecting
+hate-speech than unimodal baselines. Although their work
+is with pairs of image-text and takes standard deep neural
+architectures, our SHIELD pipeline is generalized to a
+wider range of media types (audio, video, images, and
+text) and also includes LLM-based contextual scoring and
+29496
+
+a semantic vector-based scoring system. Going beyond just
+pure detection, Jha et al. [33] introduce MemeGuard as a
+multimodal model, which fuses an optimized visual-language
+model (VLMeme) with a general-purpose LLM to come
+up with contextually relevant interventions to toxic memes.
+Their system then decodes the content of memes (image
++ OCR text) and then with the help of a multimodal
+knowledge selection and ranking component retrieves the
+appropriate knowledge upon which the LLM depends to
+generate human-like responses. MemeGuard exemplifies the
+implementation of proactive moderation with the help of
+LLMs and VLMs, whereas SHIELD emphasizes strong
+scoring and classification of explicit text of any media
+and offers a reusable backbone that can also supply such
+intervention systems. Bonagiri et al. [34] examine the concept
+of few-shot harmful content moderation with the help of
+large language models and show that in-context learning on
+specifically designed prompts can perform well on several
+harm datasets when compared to proprietary mind-reading
+APIs (Google Perspective, OpenAI Moderation) or the
+state of the art in few-shot classifiers. They also discuss
+multimodal configurations of frameworks by adding on
+video thumbnails through caption generation to further boost
+textual input to the LLM. Their findings substantiate the fact
+that LLM-based moderation is highly efficient and can be
+scaled, which is reflected in the design decision of SHIELD to
+set an LLM-based scoring system to the heart of their explicit
+content pipeline and to compare it to a conventional one built
+on a vector-based succinctness mechanism.
+These contemporary outputs all point in the direction of
+multimodal moderation, however, none of them yet supports
+a single pipeline that can take audio, video, image, and textual
+inputs with correlative cross-modal semantic processing.
+Overall, the current methods are highly visible in various isolated modes or highly specified tasks. Nonetheless, the vast
+majority of systems are based on modality-specific pipelines
+or surface-level semantic representations and are therefore
+not equally able to capture implicit, context dependent, and
+cross-modal harmful cues. It is this disjunction that drives the
+desire to have an all-encompassing, context-sensitive model
+that can incorporate heterogeneous media into a common
+semantic form, which is the key point of the suggested
+SHIELD system.
+The exponential growth of online content across text,
+audio, video, and interactive platforms has amplified the risks
+of harmful, explicit, and abusive material reaching vulnerable
+audiences. While existing machine learning and natural language processing models have achieved measurable progress,
+they remain insufficient in addressing the complexity of
+real-world scenarios like issues to capture subtle, contextspecific cues in multimedia, to detect implicit content
+such as hate speech, radical ideologies, and covert abuse.
+This often results in high false-positive rates, undermining
+the reliability and trustworthiness of automated detection. Furthermore, critical domains including music, lyrics,
+
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 1. Evolution of methods and application focus in harmful content
+detection across decades: Traditional ML, Deep Learning, and LLM-driven
+approaches.
+
+self-harm narratives, and conversational AI remain inadequately addressed, leaving significant gaps in comprehensive
+content moderation. The lack of robust multi-modal integration further restricts adaptability to the evolving and
+dynamic nature of online platforms. Consequently, there is
+an urgent need for more inclusive datasets and advanced
+Large Language Models (LLMs) that can enhance contextual
+comprehension, improve precision, and deliver scalable,
+context-aware detection across diverse digital domains.
+Figure 1 depicts the decade-wise evolution of methods
+and applications. Recent multimodal approaches such as
+CLIP-grounded captioning pipelines (image → CLIP →
+LLM), FROMAGe, PaLI-X, and other grounding-aware
+large multimodal models demonstrate strong performance
+in vision–language alignment and are commonly used as
+baselines for multimodal reasoning. In parallel, retrieval
+and rerank systems, including embedding-based moderation
+filters widely adopted in production text-safety stacks,
+represent an efficient and practical class of baselines. Yet,
+these systems are normally single-modality or somewhat
+multimodal (such as image-text or text-only) and do not
+provide a consolidated, end-to-end pipeline that allows to
+process cross-media inputs together (audio, video, images,
+and text). Specifically, they do not have a shared semantic
+normalization layer that would allow multimodal reasoning
+and comparative assessment of heterogeneous inputs. The
+given limitation inspires SHIELD design as a single multimodal pipeline to detect explicit-content in a variety of media
+types.
+Existing evaluation initially compared SHIELD against
+embedding-based similarity methods due to their simplicity and widespread adoption in early content moderation
+systems. However, a growing body of recent literature
+demonstrates that transformer-based multimodal models
+and LLM-based classifiers constitute substantially stronger
+baselines for semantic moderation tasks, particularly in
+settings involving contextual, implicit, or cross-modal harm.
+Transformer-based models such as CLIP, BLIP, and
+VisualBERT jointly model cross-modal interactions and
+have become standard baseline architectures for multimodal semantic understanding [42], [43], [44]. In particular, CLIP learns aligned vision–language representations
+through a contrastive objective, enabling robust zero-shot
+VOLUME 14, 2026
+
+classification and semantic alignment that can be repurposed
+for safety and moderation tasks. Beyond CLIP, models
+such as BLIP and MiniGPT-4 extend vision–text reasoning
+toward richer semantic understanding, making them strong
+baselines for perceptual moderation [43], [45]. Empirical
+studies in tasks such as meme classification demonstrate that these transformer-based multimodal representations, when fine-tuned or adapted, consistently outperform
+basic static embeddings, as shown by systems such as
+MemeBLIP2 [46].
+For text-only moderation, fine-tuned transformer classifiers such as BERT and RoBERTa have similarly
+become standard baselines, outperforming static embedding
+similarity methods by capturing nuanced contextual and
+implicit cues in harmful content [47], [48]. More recently,
+the moderation community has increasingly explored
+LLM-based moderation systems, including multimodal large
+language models [49]. Benchmarking studies involving
+models such as GPT, Gemini, and LLaMA variants report
+performance that rivals professional human reviewers
+on nuanced multimodal moderation tasks such as brand
+safety assessment [50]. Across studies, both zero-shot
+and lightly prompted LLM-based approaches consistently outperform classical embedding similarity methods,
+especially for context-dependent and implicit harmful
+content.
+While recent academic research has explored end-to-end
+multimodal transformer architectures such as CLIP [42]
+and BLIP [43] for multimodal classification, large-scale
+content moderation systems in practice frequently employ
+embedding-based retrieval and vector similarity as the initial
+filtering stage due to scalability and latency considerations [30], [34]. Vector-based approaches enable efficient
+retrieval over very large content corpora and are commonly
+used to achieve high recall under strict throughput constraints,
+making them suitable for deployment in real-world moderation pipelines.
+In contrast, state-of-the-art multimodal transformers
+and large multimodal models, while offering superior
+representational capacity, typically incur substantially
+higher computational cost and inference latency, limiting their applicability as first-stage filters in highvolume moderation settings [46], [49]. As a result, such
+models are often employed selectively for downstream
+reasoning or escalation rather than continuous large-scale
+screening.
+Accordingly, the experimental evaluation compares
+SHIELD against a production-grade vector-based baseline
+using the all-MiniLM-L6-v2 embedding model. This baseline
+reflects a widely adopted and computationally efficient
+moderation strategy, enabling a principled assessment
+of how LLM-based semantic reasoning improves upon
+traditional embedding retrieval under identical input normalization. The comparison highlights the complementary
+roles of high-recall vector retrieval and high-precision
+contextual reasoning, demonstrating the necessity of
+29497
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+reasoning-oriented moderation layers for detecting implicit
+and context-dependent harmful content.
+A. RECENT MULTIMODAL CONTENT MODERATION
+SYSTEMS
+
+Multimodal content moderation systems combining visual,
+textual, and auditory signals to identify harmful or explicit
+content have become the focus of recent research because
+of the rising number of cross-modal hazards, including hate
+memes or videos with conflicting visual and audio information. Traditional unimodal systems often fail in these settings,
+prompting the development of model-centric multimodal
+fusion architectures that tightly couple modality-specific
+encoders through early, late, or cross-attention-based fusion
+strategies. Representative approaches include VideoModerator, which integrates visual, audio, and OCR signals
+for domain-specific video moderation [28], Asymmetric
+Mixed-Modal Moderation (AM3), which explicitly models
+semantic asymmetry across modalities using contrastive
+learning [36], and MM-HSD, which employs cross-modal
+attention to fuse speech, visual frames, and on-screen
+text for hate speech detection in videos [37]. Other
+systems such as Hi-Guard [38], ShieldVLM [39], and
+ToxVidLM [40] further extend multimodal moderation by
+incorporating policy hierarchies, implicit toxicity modeling,
+and multilingual reasoning, while evaluation benchmarks
+like MM-SafetyBench assess the robustness of multimodal
+large language models against unsafe manipulations in paired
+image–text inputs [41]. While these systems demonstrate
+strong performance on task-specific benchmarks, they are
+typically built around tightly coupled multimodal encoders
+and fixed fusion architectures, requiring modality-aligned
+supervision and retraining to incorporate new input types
+or evolving moderation policies. This architectural rigidity limits their adaptability in heterogeneous, real world
+moderation pipelines where arbitrary combinations of text,
+image, audio, and video content must be handled consistently.
+In contrast to this, SHIELD adopts a pipeline centric,
+semantic normalization strategy; rather than an end-to-end
+multimodal fusion model. Heterogeneous inputs, including
+text, images, audio, and video, are first transformed into a
+unified textual abstraction through modality-specific preprocessing such as transcription, captioning, and summarization.
+This normalized semantic representation is subsequently
+analyzed using both LLM-based contextual reasoning and
+vector-based similarity scoring. By decoupling modality
+handling from semantic evaluation, SHIELD emphasizes
+modularity, extensibility, and interpretability, enabling consistent moderation across arbitrary media types without
+retraining multimodal encoders. Consequently, SHIELD
+complements existing fusion-based systems by providing a
+general-purpose, architecture-agnostic moderation backbone
+focused on generalized policy reasoning and explicitness
+assessment, rather than competing directly with specialized
+multimodal classifiers.
+29498
+
+III. PROPOSED METHODOLOGY
+
+According to the analyzed literature, even though previous studies like Bhatti et al. [9] have tried multimodal
+explicit-content detection among text, audio, and video, such
+methods still have significant shortcomings. Specifically,
+current systems handle the different types of media separately
+and do not combine the contextual information across media.
+Moreover, there is no previous system that collectively
+examines mixed media inputs or makes use of cross-modal
+semantic dependencies (e.g. matching audio transcripts to
+video cues or matching textual and visual signals within the
+same content). Thus, the literature gap is not in the form of
+absence of multimodal systems, but in the sense that a single
+context-sensitive pipeline that can process heterogeneous
+inputs and integrate their semantic contributions to more
+robust explicit-content detection has just not been learned
+yet. This research proposes a holistic framework for explicit
+content detection that deals with the simultaneous processing
+and analysis of multiple types of media. The proposed
+methodology for explicit content detection is designed to
+handle multiple media types, including audio, video, image,
+and text files. The system first accepts input in the form of
+a folder containing mixed media files. These files are then
+categorized into distinct types: audio, video, image, and text;
+creating specific data objects for each. Data objects serve to
+handle as well as to store media contents at each pipeline
+stage. For the preprocessing stage, the system conducts
+checks against corruption and ensures standard formats are
+maintained for different types of media. Audio data has
+its background noise filtered, and its format is normalized.
+Video files are extracted and their resolutions adjusted. Image
+files are resized and pixel values are standardized. Text files
+are tokenized and cleaned of any unnecessary characters.
+During the processing stage, every media-type is fed into a
+respective model for processing. Audio files are transcribed
+using the Groq Whisper V3 Turbo. Video content is processed
+using Google’s Gemini Pro to extract contextual information.
+Images are analyzed using the Groq LLama 3 Vision for
+image-to-context conversion, while text data is used as it
+is. These analysed results are stored in corresponding data
+objects. Finally, explicit content is scored both by LLM-based
+and Vector-based scoring. LLM offers a context-aware score
+whereas vector embeddings are used to determine the cosine
+similarity with explicit content samples.
+A. PIPELINE STRUCTURE OVERVIEW
+
+The pipeline for explicit content detection, as depicted in
+Figure 2, is meant to handle and analyze various types of
+media efficiently, such as audio, video, image, and text in a
+structured and sequential manner. Input files are first divided
+into various data objects according to their format; thus, each
+is handled accordingly. The initial stage of the pipeline is
+the preprocessing stage, in which, all forms of media are
+submitted for validation, and converted to guarantee data
+consistency and integrity, preparing them to be sent to other
+
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 2. Flowchart of the explicit content detection pipeline.
+
+analytical processes. With the data already pre-processed,
+the system enters the second step of the content processing:
+audio files are converted into text using advanced models
+of converting the auditory data to readable form; video files
+are processed by an LLM in the video-to-context processing
+algorithm to retrieve the information that is relevant to the
+visual and audio components. The images are sent to an
+LLM for image-to-context conversion to enable the system
+to interpret visual content via textual information. For text
+files, the system interprets the content itself to determine
+overt keywords, phrases, and contextual indicators. After
+processing all the media, the system accumulates all the
+results identified and uses two different scoring systems:
+LLM-based scoring to score the contextual meaning of
+the content, and vector-samples of processed content. The
+double scoring system provides a foundation for comparison
+between the current vector-based approach and the new
+introduced LLM-based method based on the same data
+objects. Even though SHIELD includes an LLM-based
+classifier and a vector-based scoring system, these are not part
+of a single or hierarchical decision-making process. Rather,
+they are separate, independent evaluation heads applied to
+the same single textual representation only to benchmark
+them and compare them to each other. Their productions
+do not have to be combined or ganged into one final label;
+therefore, there is no conflict-resolution policy or peckingorder. There is no selection of the two outputs; instead,
+every one of the modules yields its own explicitness score,
+which is evaluated independently to determine comparative
+performance. The Figure 2 illustrates the complete pipeline in
+a detailed and structured manner, providing a clear overview
+of each component. In the subsequent sections, each module
+of the pipeline will be examined in depth to elucidate its
+role, underlying methodology, and contribution to the overall
+system.
+B. MODEL SELECTION RATIONALE
+
+In this work, the Llama-3.1-70B model has been chosen
+because it has the most advanced performance on four levels,
+including contextual understanding, safety classification, and
+long-range semantic reasoning. Being a foundation model
+that is trained on various multilingual and multimodal
+data, Llama-3.1-70B has high generalization and much
+better instruction-following behavior than other previous
+LLMs. These attributes make it specifically well adapted to
+explicit-content detection, where sensitive contextual data,
+
+VOLUME 14, 2026
+
+implicit indicators of harm, and cross-modal alignment of
+semantics are needed to offer reliable classification. Its
+superior safety-tuning also offers resilience in accordance
+to hallucinations and misclassification in case of sensitive
+content categories. The vector-based baseline was selected
+based on an all-MiniLM-L6-v2 embedding model because
+it is efficient, has a lightweight architecture, and achieves
+a stable and high performance in semantic similarity
+tasks. Being a distilled transformer encoder, MiniLM-L6v2 supports sentence embeddings of high quality at just
+a fraction of the computational costs of larger embedding
+models, providing fast inference and scalable vector space
+comparisons. This renders it the right representative of the
+traditional embedding-based pipelines, and it is possible to
+rightly compare the classical semantic-retrieval methods with
+the LLM-based reasoning within the context of the proposed
+SHIELD framework.
+C. DATA COLLECTION AND LOADING
+1) DATASET ACQUISITION AND COMPOSITION
+
+The dataset used in this study was curated specifically
+for benchmarking multi-modal explicit content detection
+pipelines that comprise 6,000 samples across four media
+types. Unlike existing datasets, this dataset was manually collected from diverse online sources. this ensures
+ecological validity and representativeness of real-world
+explicit content scenarios encountered in content moderation
+workflows.
+Data Sources and Collection Methodology: All samples
+were manually collected from various online platforms.
+These platforms are known to host explicit or potentially
+harmful content, including social media platforms, contentsharing websites, and publicly accessible forums. No preexisting datasets were utilized, ensuring the benchmark
+represents current real-world content moderation challenges.
+The collection period was 2023-2024.
+The data set collected consisted of publicly accessible materials, with no private or password-protected
+content being accessed. For categories involving sensitive content, particularly Child Abuse and Exploitation,
+only simulated, cartoon, or text-based references were
+included, no actual exploitative material was collected or
+stored. Handling of this data followed applicable data
+protection regulations including secure storage and proper
+anonymization.
+Dataset Composition: The benchmark dataset consists
+of 6,000 media samples distributed equally across four
+modalities: 1,500 images, 1,500 videos, 1,500 audio files, and
+1,500 text documents. Each media type follows an approximately balanced distribution with 780 explicit samples (52%)
+and 720 non-explicit samples (48%) per modality. This
+distribution was designed to evaluate pipeline performance
+under conditions typical of content review queues. The
+near-balanced distribution enables robust evaluation of both
+false positive and false negative rates without extreme class
+29499
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+imbalance that could obscure performance metrics. Unless
+otherwise stated, all reported dataset sizes refer to the postpreprocessing dataset, after format normalization and quality
+filtering.
+Technical Specifications: Image samples exhibit variable
+resolution ranging from 480 × 360 to 1920 × 1080 pixels with an average resolution of approximately 800 ×
+600 pixels. All images utilize 8-bit RGB color depth (24bit color) and are stored in mixed formats with JPEG
+comprising approximately 65% of samples, PNG 30%, and
+BMP 5%. Aspect ratios vary across portrait, landscape, and
+square orientations to reflect diverse social media formats.
+Video samples range in duration from 2 to 30 minutes
+with a mean duration of 12.4 minutes (SD = 6.8 minutes).
+Video resolution spans from 480p to 720p with the majority
+captured at 720p, utilizing standard web video frame rates of
+24-30 fps. The format distribution consists of approximately
+70% MP4, 20% AVI, and 10% MKV files, encompassing content types including user-generated content, screen
+recordings, and edited clips. Audio samples exhibit durations
+ranging from 1 to 20 minutes with a mean of 8.2 minutes
+(SD = 4.5 minutes). All audio is sampled at 44.1 kHz
+(standard audio CD quality) with 16-bit depth, including
+both mono and stereo channel configurations. The format
+distribution comprises approximately 60% MP3, 25% WAV,
+and 15% AAC files, with content types including podcasts,
+voice recordings, music, and sound effects. Text samples
+range from 3 to 30 lines in length with a mean of 12 lines
+(SD = 6.3 lines), corresponding to approximately 50-400
+words per sample. Content is primarily in English with codeswitched material, slang, and colloquialisms representative
+of online discourse. Sources include social media posts,
+forum comments, chat logs, image captions, article excerpts,
+and user-generated descriptions. Linguistic features encompass intentional misspellings, emoji usage, abbreviations,
+and obfuscation techniques commonly employed to evade
+automated detection.
+2) ANNOTATION FRAMEWORK AND GROUND TRUTH
+ESTABLISHMENT
+
+To capture the multi-dimensional nature of explicit content,
+a fine-grained, fifteen-category annotation scheme was developed. Each sample was evaluated across all fifteen categories
+simultaneously, with annotators assigning a severity score
+ranging from 0% (absent) to 100% (extreme).
+• Sexually Explicit Material (SEM): Nudity, sexual acts,
+pornographic content.
+• Violence and Terrorism (VT): Graphic violence, gore,
+terrorist propaganda.
+• Self-Harm and Suicide (SHS): Depictions or promotion of self-injury or suicidal behavior.
+• Child Abuse and Exploitation (CAE): Any content
+exploiting or endangering minors.
+• Racial Slurs (RS): Racially discriminatory language or
+imagery.
+29500
+
+• Hate Speech (HS): Content targeting groups based on
+
+protected characteristics.
+Abuse (SA): Promotion, glorification,
+or instructional drug-use content.
+• Body Shaming (BS): Mocking or denigrating physical
+appearances.
+• Homophobic Content (HC): Anti-LGBTQ+ language
+or harassment.
+• Transphobic Content (TC): Anti-transgender discrimination or harassment.
+• Sexist Content (SC): Gender-based discrimination or
+misogyny.
+• Harassment (H): Targeted intimidation or threatening
+behavior.
+• Cyberbullying (CB): Online bullying, mob harassment,
+or coordinated attacks.
+• Misinformation and Fake News (MFN): Deliberately
+false or misleading content.
+• Invasive Privacy Violation (IPV): Unauthorized sharing of private information, doxxing, or non-consensual
+intimate content.
+• Substance
+
+D. ANNOTATION DESIGN AND GUIDELINES
+
+The ground truth annotation procedure was aimed at ensuring
+semantic consistency, reliability, and interpretability across
+multimodal content. Each sample was rated by several
+annotators using a continuous explicitness scale, which
+recorded subtle degrees of harmfulness beyond binary
+classification. The design decision is directly in line with
+the goal of SHIELD to generate fined-grained explicitness
+scores and not just coarse labels. Blind annotation was done
+to the model output to avoid confirmation or anchoring bias.
+The disagreements between the annotators were resolved
+in a formalized consensus process. Conflicting labels were
+reviewed jointly, and final annotations were determined via
+discussion guided strictly by the annotation protocol.
+Annotators were provided with a comprehensive written
+set of guidelines with clearly defined categories of content,
+severity definitions, contextual concerns (implicit, suggestive, and borderline cases) and modality specific problems.
+Such structured annotation schemas are critical for aligning
+human judgment in moderation datasets, as highlighted in
+prior work emphasizing their impact on annotation reliability
+and consistency. The severity scoring protocol defined five
+ranges: 0% indicated the category was completely absent
+with no indication of relevant content; 1-25% indicated mild
+or implied presence such as suggestive language, innuendo,
+or indirect references; 26-50% indicated moderate presence
+where content was clearly present but not extreme, such
+as profanity or mild violence depictions; 51-75% indicated
+significant presence with strong, overt content including
+explicit language or graphic descriptions; and 76-100%
+indicated extreme or graphic presence with highly explicit
+visual or audio depictions representing severe violations.
+Annotators applied contextual judgment rather than relying
+
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+on surface cues, beginning with an assessment of intent
+to distinguish educational or documentary material from
+content that promotes harmful behavior. They then evaluated
+the graphic intensity of each piece, differentiating direct
+visual or audio depictions from indirect or textual references,
+and considered whether the target audience was clearly adult
+or general. Cultural factors such as regional norms, historical
+context, and artistic expression were also taken into account
+to ensure accurate and realistic moderation outcomes. In the
+case of multimodal content, such as videos combining visuals
+and audio, or images paired with text, each modality was
+assessed independently before assigning an aggregate severity score based on the most severe element. When modalities
+conflicted, the stricter interpretation prevailed; for instance,
+graphic imagery outweighed educational narration. Ambiguous or borderline cases were scored using a worst-case
+interpretation when intent could not be confidently inferred,
+and satirical or ironic material was evaluated at face value due
+to the limited contextual understanding typical of automated
+systems. Content specific to certain regions or cultures was
+judged from a global moderation perspective to maintain
+consistency across diverse contexts.
+Annotation Process and Quality Control: Three annotators participated in the ground truth annotation process,
+who were computer science graduate students aged 2025 with backgrounds in natural language processing and
+computer vision. The annotators were chosen concerning
+their previous experiences with content moderation work
+and machine learning dataset development. Each possessed
+familiarity with content moderation frameworks, online
+platform policies, and explicit content taxonomies. All
+of them have fluent English proficiency and awareness
+of contemporary internet culture, slang, and obfuscation
+tactics. The decision to have authors conduct annotation
+rather than employing crowdsourcing was driven by content
+sensitivity requiring mature judgment, the nuanced 15category framework requiring expert understanding, the need
+for consistent interpretation throughout the annotation period,
+and the necessity of maintaining strict ethical protocols
+for handling sensitive material. The first 100 samples were
+annotated jointly to establish shared understanding before
+independent annotation commenced. Each of the 6,000
+samples was independently annotated by all three annotators
+using a custom annotation interface, with sessions conducted
+in batches of 100-200 samples to prevent cognitive fatigue.
+The total annotation effort required approximately 240 hours
+over a 6-week period.
+A systematic two-tier disagreement resolution protocol
+was implemented to establish final ground truth labels
+when annotator judgments diverged. The first tier addressed
+category presence or absence disagreements using majority
+rule, where if two out of three annotators assigned a
+non-zero score, the category was considered present. The
+second tier addressed severity score disagreements where all
+annotators agreed a category was present but scores diverged
+significantly. Scores were flagged for review if the range
+VOLUME 14, 2026
+
+exceeded 30 percentage points, with resolution achieved
+through discussion-based consensus or, when necessary,
+arithmetic mean of the three scores. Tier 1 disagreements
+occurred in approximately 8% of all category-sample pairs
+(7,200 out of 90,000 instances), of which 89% were resolved
+in favor of category presence. Tier 2 severity discussions
+were required for approximately 12% of samples with
+present categories (6,500 instances), with discussion-based
+consensus achieved in 97% of flagged cases and mean
+averaging applied in the remaining 3% (195 instances). The
+overall consensus rate across all annotations was 88%.
+1) INTER-ANNOTATOR AGREEMENT ANALYSIS
+
+Methodology and Rationale: To quantify the reliability and
+consistency of the ground truth annotation process, interannotator agreement (IAA) was assessed using Krippendorff’s alpha (α) and the Intraclass Correlation Coefficient
+(ICC), both of which are widely accepted measures for ordinal and continuous annotation tasks. These metrics evaluate
+whether annotations reflect reproducible semantic judgments
+rather than subjective interpretation, ensuring that the dataset
+provides a reliable evaluation benchmark for multimodal
+content moderation. Given the three-annotator setup and
+continuous severity scores (0–100%), two complementary
+IAA metrics were employed. Krippendorff’s alpha (α) was
+selected for its suitability for multiple annotators, ability to
+handle interval-scale data, correction for chance agreement,
+and robustness to missing values and variable sample sizes.
+According to established benchmarks (Krippendorff, 2004),
+α ≥ 0.67 supports tentative conclusions, while α ≥
+0.80 enables definitive conclusions.
+The Intraclass Correlation Coefficient (ICC) was used as a
+complementary metric, specifically model ICC(2,k), which
+evaluates absolute agreement among the mean ratings of
+the three annotators. This model is well-suited for assessing
+consistency of continuous severity scores. Interpretation
+guidelines from Cicchetti (1994) classify ICC values below
+0.40 as poor, 0.40–0.59 as fair, 0.60–0.74 as good, and values
+of 0.75 or higher as excellent.
+Inter-Annotator Agreement Results: IAA computed across
+all categories and media types yielded Krippendorff’s α =
+0.78 (95% CI: 0.75–0.81) and ICC(2,3) = 0.82 (95%
+CI: 0.79–0.85). The overall α of 0.78 indicates substantial
+agreement approaching the α ≥ 0.80 threshold for
+definitive conclusions. The ICC value of 0.82 indicates
+excellent agreement, confirming high consistency in severity
+scoring across annotators. Together, these metrics validate the
+reliability of the ground truth annotations.
+Table 2 presents IAA disaggregated by category. Sexually
+Explicit Material, Violence and Terrorism, and Child Abuse
+and Exploitation achieved the highest agreement (α values
+of 0.84, 0.81, and 0.89). These categories involve clear
+and unambiguous cues such as nudity, graphic violence,
+or involvement of minors, resulting in lower contextual
+ambiguity. Body Shaming, Harassment, Cyberbullying,
+and Misinformation displayed lower but still acceptable
+29501
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+TABLE 2. Inter-annotator agreement by content category.
+
+TABLE 3. Inter-annotator agreement by media type.
+
+0.79 respectively. The consistency across pairs (κ = 0.74–
+0.79) demonstrates that no annotator was an outlier and that
+agreement was uniformly strong.
+E. IMAGE PROCESSING
+
+agreement (α = 0.58–0.67), reflecting inherent subjectivity
+related to intent, context, or factual verification. All categories exceeded the α ≥ 0.60 threshold acceptable for
+exploratory research. The mean agreement across categories
+was α = 0.71 and ICC = 0.75.
+Table 3 presents results by media type. Images achieved
+the highest agreement (α = 0.81) due to static, easily
+interpretable visual cues. Videos showed slightly lower
+agreement (α = 0.79), reflecting the added complexity
+of temporal and multimodal elements. Audio yielded lower
+agreement (α = 0.74), attributable to challenges in
+interpreting tone, sarcasm, and linguistic ambiguity without
+visual context. Text data showed moderate agreement (α =
+0.77), influenced by slang, coded language, and online
+obfuscation strategies.
+All reported α and ICC values achieved statistical significance (p < 0.001) when tested against the null hypothesis
+of zero agreement, confirming that observed agreement
+substantially exceeds chance.
+Confidence Intervals and Reliability Testing: To quantify
+uncertainty in IAA estimates, 95% confidence intervals were
+computed using bootstrap resampling with 10,000 iterations,
+sampling at the level of individual samples while preserving
+all three annotators’ ratings. The percentile method was used,
+extracting the 2.5th and 97.5th percentiles of the bootstrap
+distribution. All reported confidence intervals confirmed that
+IAA metrics were stable, with narrow intervals (typically
+±0.03–0.04) indicating high precision.
+To assess robustness to annotator composition, pairwise
+agreement was evaluated using Cohen’s kappa for binary
+classifications derived from severity scores. Annotator pairs
+(1 vs. 2), (1 vs. 3), and (2 vs. 3) yielded κ = 0.76, 0.74, and
+29502
+
+While building the multimodal dataset of this paper, a large
+part of our dataset, around 1500 images, was derived from
+diverse channels, including- public datasets, web repositories,
+social media sources like Telegram, selected for being rich
+in real-world, context-rich visual content. This diversely
+sourced image collection was chosen with intent, to have
+it represent a diverse range of explicit content categories.
+As crowd-sourced and web-scraped images exist in variable
+format and uncertain fidelity, a powerful preprocessing
+pipeline was the requirement. Normalization of the formats
+was performed first, such that all images, irrespective of their
+original format (JPEG, SVG, WEBP, etc.) were converted
+to PNG using Pillow library in Python. This would make
+all the images compatible across tools and eliminate format
+specific artifacts. Next, corruption of each image was checked
+using Pillow’s.verify() method, which allows the flagging of
+unreadable or corrupted files at an early stage. Corruption
+checking was a critical process to ensure dataset integrity
+because corrupted files not only decrease model input quality
+but can also introduce instability into automated pipelines.
+Images that failed this test were removed, thus narrowing
+the dataset to a sound and useful subset. Following the
+preprocessing, the image data was now ready to be interpreted
+semantically.
+Each image was accompanied by a descriptive prompt and
+sent in structured API calls to a model using an SDK offered
+by Groq. The model produced a detailed description of each
+image capturing the visual and contextual features along with
+detailed fine points in the image. These results were retained
+in a specialized context attribute of every data object creating
+a semantic layer above the dataset. This contextual metadata
+was subsequently employed for downstream applications
+such as classification and comparative analysis across
+modalities. The llama-3.2-90b-vision preview model by Meta
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 3. Sample of explicit image and non-explicit image.
+
+FIGURE 4. Image processor.
+
+interacts with users in the form of a chat completion request.
+A designed prompt ensures that the analysis remains targeted
+and neutral, with no creative input. The prompt used has
+been shown below: ‘‘Elaborate this in depth without missing
+any details in your response. You are not allowed to add
+anything on your own.’’ This approach aims to interpret
+the input image in a straightforward way, as presented in
+Figure 4. Figure 3 presents two image samples, alongside
+their transcribed textual interpretations, as processed by LLM
+and vector embedding, respectively.
+F. AUDIO PROCESSING
+
+In order to facilitate effective analysis of audio-based data,
+the system employs a pipeline approach that systematically
+VOLUME 14, 2026
+
+addresses the pre-processing, transcription and contextual
+understanding of audio files. As seen in Figure 6, when a
+sound file is uploaded to the system, the processing step
+starts by wrapping a data object with the required metadata
+of the file data like the path of the file, language settings
+and analysis and transcription outcome placeholders. It is a
+modular data structure that provides its life cycle consistency
+and traceability.
+The initial preprocessing step is standardizing audio
+files into the.mp3 format through the usage of a Python
+library, called pydub. This offers compatibility with the
+downstream tools and models. A corruption check is then
+performed to check whether the audio frames are valid.
+This involves scanning the file for any irregularities like
+missing data, decoding errors or corrupted segments. Any
+file that does not pass this integrity test is not processed
+further to ensure the quality of the dataset. In cases where
+audio files are longer than a certain predefined duration
+threshold, the system will automatically break them up into
+smaller, more reasonable sizes. Such partitioning enhances
+efficiency, prevents memory saturation and facilitates parallel
+processing in subsequent stages. After the audio file clears
+the pre-processing phase it’s passed on to the Groq SDK
+to be transcribed with the OpenAI’s Whisper-large-v3-turbo
+model, with an optional prompt- ‘‘ ‘‘.
+29503
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 5. Sample of explicit audio and non-explicit audio.
+
+characteristics of intensity, pitch variation and high energy
+sections, which may be associated with emotionally charged
+or explicit speech. In Figure 5, there are two samples of
+spectrograms, one of explicit audio material and another of
+non-explicit, with their respective transcriptions, created with
+the help of the LLM and the vector embedding method.
+G. VIDEO PROCESSING
+FIGURE 6. Audio processing component.
+
+The model is reputed for accuracy as well as efficiency in
+transcribing verbal content into written material, for several
+languages, accents and speech patterns. The transcription is
+invoked with a specific API call as depicted in Figure 6.
+Parameters such as audio file path, model, language and
+temperature are provided in the request. The model reads the
+file and responds with a verbose text output in JSON form
+with the complete transcript of the audio. The transcript is
+then saved in the context attribute of the audio data object.
+This serves as the basis for subsequent semantic analysis.
+The text that has been transcribed is then processed for
+explicit content by searching out sensitive keywords, terms,
+or contextual information. Detection utilizes lexical matching
+as well as contextual meaning in order to be as precise
+as possible. All output is retained in the data object so
+that the audio content is completely processed, formatted
+and available to be visualized or moderated in subsequent
+phases of the system. In addition to the transcription analysis,
+spectrograms of some audio samples were made to illustrate
+the change in frequency and amplitude with time. They used
+two samples- one sample was an explicit audio sample and
+the other was non-explicit sample. These portray the acoustic
+29504
+
+In order to process and analyze video-based content
+effectively, the system initiates a controlled pipeline that
+begins with creation of video specific data objects. These
+objects manage the entire life of a video, from loading,
+content interpretation, and maintaining related metadata,
+to processing frames as well as handling contextual analysis
+results. The preprocessing phase ensures that all videos that
+come in are of standard format and quality. This starts with the
+transformation of the video files into the normal.mp4 format
+using the OpenCV library in Python. Standardization helps
+in easing the process of next steps and compatibility with the
+downstream devices in the system.
+Preprocessing is used to maintain consistency of all the
+input videos, in terms of quality and format. This is done by
+converting the video files to a common.mp4 through Python
+and the OpenCV library. Format standardization makes the
+subsequent processes easier and compatible with the system’s
+downstream elements. Following that, there is a corruption
+check which involves frame level validation to ascertain
+whether there is any missing or unreadable portion of the
+video. If the video file is incomplete or partially corrupted,
+it is marked and, subsequently, taken out of the processing
+queue to ensure data integrity. Where videos are discovered
+to be longer than a specific length threshold, they are broken
+down into smaller pieces.
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+This ensures long videos are processed effectively, without
+overloading the memory of the system or leading to delays
+in content analysis. Processing Phase After preprocessing is
+completed, the video is passed to semantic analysis through
+Google’s gemini-1.5-pro-002 model using the Google SDK.
+The system makes two API requests:
+· The first request uploads the video to Google’s cloud
+environment.
+· The second request prompts the model to perform
+an in-depth analysis using a structured input prompt:
+‘‘Analyze the video named (uploaded video.name)’ in
+depth without missing any details.’’
+This model is well placed for this function since it
+possesses high contextual comprehension and is moderation
+free, thus suitable for explicit content assessment. The
+model processes the visual content of the video and
+produces a rational textual paragraph that explains the
+visual activities of the video. The output of the model,
+typically a descriptive paragraph, acts as a contextual
+description of the video content, presenting every minute
+detail of the video. The output is stored under the context
+property of the corresponding video data object and serves
+as the foundation for further classification and content
+moderation processes. This complete system ensures the
+technical consistency of the video data and facilitates an
+interpretation of the content, opening up the way to robust
+and responsible multimedia analysis. The entire process is
+shown in Figure 8, emphasizing each of the major stages
+from preprocessing to semantic transformation. Frames were
+taken from video samples to assist with visual context
+to supplement textual and audio analysis. Two opposing
+examples were chosen;one for neutral, non-explicit content,
+and another for historically sensitive and potentially volatile
+subject matter. These frames, selected from both explicit and
+non-explicit video data, gave insight into the tone, setting,
+and expressive cues that facilitate content classification. Only
+ethically correct and anonymized visuals were used to ensure
+academic integrity. Figure 7, showcases representative frames
+or thumbnails extracted from two videos, one containing
+explicit content and the other non-explicit, along with their
+associated textual transcriptions derived through the LLM
+and vector embedding pipelines.
+H. TEXT PREPROCESSING
+
+For text processing stage, the system cleans the text by
+removing any special characters such that data is standardized
+and made free of unwanted symbols which are likely to
+interfere with the analysis. Following cleaning, the data
+object is updated with the cleaned text, into a suitable state
+for advanced evaluation, including explicit content analysis
+and keyword identification.
+I. LLM-BASED SCORING
+
+The LLM-based scoring mechanism is an integral component
+of the explicit content detection pipeline and enables
+VOLUME 14, 2026
+
+contextual classification of multimedia inputs. This phase
+is intended to identify potentially objectionable or explicit
+content not only by surface level indicators but by deep
+semantic comprehension of how content is created and conveyed. This dependence on richer semantic processing can
+be justified by recent results that indicate that LLMs assess
+meaning, coherence, and contextual quality more efficiently
+than more traditional surface-based approaches [22]. After
+media inputs, viz audio, video, image or text, are analyzed and
+preprocessed they are fed through modality specific pipelines
+(e.g. transcription, captioning or summarization) to create
+a structured textual representation. These representations
+are stored in the context field of individual DataObjects
+and packaged into an Event which is subsequently sent to
+the LLM Handler. The LLM is responsible for analyzing
+the content of the input text using the same categories
+and producing percentage scores for each. Benchmarking
+studies of the use of LLM-based judgment systems also
+demonstrate that with a suitable prompting, the LLM can
+produce consistent graded relevance signals that are quite
+comparable to human evaluators [23]. The LLM processes
+the content using a predefined prompt, which ensures that it
+generates accurate and precise results depicted in Figure 9.
+The LLM Handler parses and gives out results in a
+well-structured JSON format. It gives each category a confidence score as a percentage. These percentages, in actual
+decimal values, demonstrate how well the content falls into
+each category. A 100 percent indicates that the category is
+present, whereas 0 percent indicates that it is absent from
+the input. Such an approach enables the analysis to go
+beyond searching keywords and provides a detailed view of
+meaning. This is in line with other recent studies that have
+proven that an LLM-driven evaluator is better in representing
+subtle, implicit, or context-specific meaning compared to
+rule-based or a keyword-based system [22]. Between API
+calls, a slight delay is introduced to make the system stable
+and to trace API usage limits. This break may be minor,
+but it is very important when dealing with large amounts
+of information. It helps avoid throttling, maintains error
+rates at a low level, and ensures that data traverses massive
+content streams. The system exports output in a CSV file,
+including such important details as file IDs and content
+sources. This format is conducive to moderation pipelines and
+also does a good job in benchmarking and visualization. This
+layer, based on LLM, is unique when it comes to tasks that
+require contextual interpretation and choice. The comparative
+studies of the decision and relevance-judgment methods
+based on LLM also confirm their capability to make more
+fine-tuned contextual evaluations akin to a human annotator
+than a conventional automated system [23]. Conventional
+rule-based or keyword-based systems often fail here. It is
+blended with the vector-based scoring method to give the
+process more nuance. It assists in searching for oblique
+hints and insinuations that might be missed. The scores and
+corresponding metadata, like file ID and source of content,
+
+29505
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 7. Sample of explicit video and non-explicit video.
+
+FIGURE 8. Video processing component.
+
+are stored as CSV which provides a structured tabular format
+for subsequent benchmarking, visualization, or moderation
+workflow inclusion. In situations where semantic fineness
+and context awareness are required, and keyword filters
+will likely yield a false positive or miss a weak clue, the
+LLM-based solution works well. It’s the interpretive stage of
+the pipeline, complementing the pattern-recognition abilities
+of the vector-based scoring module which would be discussed
+in the following subsection.
+J. VECTOR-BASED SCORING
+
+While LLM-based scoring examines content through
+linguistic reasoning, the vector-based scoring module
+applies semantic similarity, placing the input text in a
+high-dimensional vector space and comparing it to a filtered
+29506
+
+list of explicit content categories. This stage begins with
+the Vector Handler, which retrieves the context field from
+each DataObject in an Event. The text is then embedded
+with a sentence-transformer model (e.g., all-MiniLM-L6v2) and generates a dense vector representation grasping
+the underlying semantics of the content. This is based on
+the Sentence-BERT (SBERT) framework by Reimers and
+Gurevych showing that sentence embeddings can effectively
+be used to score semantic similarity based on the cosine
+distance. In parallel, a pre-loaded vector database, which
+resides in ChromaDB, includes 15 pre-defined categories of
+explicit content, with representative keywords or phrases.
+These include: sexually explicit material, racial slurs,
+violence and terrorism, misinformation and fake news,
+substance-abuse, self-harm and suicide as well as child
+abuse and exploitation. For instance, a phrase like ‘‘let the
+darkness win’’ may score highly in the self-harm category,
+even without using words like ‘‘suicide’’ or ‘‘die’’, by virtue
+of semantic resonance. Keywords within each category go
+through vectorization using the same embedding model and
+are, then, arranged logically. In scoring, the input vector
+is matched with each category vector group by cosine
+similarity, giving a scalar value (-1 to 1) of how well the
+content fits that category. In order to make the output more
+understandable and to align the output of the model with that
+of the LLM-based model, the similarity scores are normalized
+and transformed into a percentage format. A JSON object
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 9. LLM prompt.
+
+contains these scores, and following that, they are logged
+in CSV format and can be easily accessed at the analysis
+or visualization stages. Unlike hard keyword matching, this
+embedding-based method is particularly good at conceptually
+analogous matching, e.g., euphemisms or encoded language
+that is regularly employed to circumvent traditional filters.
+The vector-based system is capable of accommodating the
+establishment of implied explicitness because of its semanticlevel operation, thereby providing a legitimate supplement to
+the interpretative rationale of the scoring of the LLM. For
+example, whereas ‘‘ended it all’’ might be overlooked by
+keyword detectors, the vector system would be able to relate
+this to self-harm on the basis of its semantic similarity to
+words of similar meaning. The cosine similarity is a similarity
+metric that computes the cosine of the angle between two
+non-zero vectors in a multi-dimensional space. The similarity
+between word vectors or sentence embeddings is often
+compared in semantic search to use it. The vector-based
+scoring module computes the semantic similarity between
+input content and predefined category embeddings using
+cosine similarity, a widely adopted metric in information
+retrieval and natural language processing. Cosine similarity
+measures the cosine of the angle between two non-zero
+vectors in an inner product space, thereby quantifying their
+directional similarity independent of magnitude [24]. It is
+particularly suited for high-dimensional semantic spaces
+where term frequency or contextual usage governs proximity.
+Cosine similarity is presented formally as the value of cosine
+of the angle of two vectors, and is commonly used to measure
+VOLUME 14, 2026
+
+semantic proximity in NLP applications, based on the
+standard mathematical model of the concept. Input texts are
+transformed into dense embeddings using the all-MiniLML6-v2 model, a lightweight sentence transformer that
+preserves semantic richness while ensuring computational
+efficiency. This model builds on the broader tradition of
+vector-based word and sentence representations, as seen
+in Word2Vec [25] and GloVe [26], where contextual or
+co-occurrence information is encoded into vector space to
+support similarity-based retrieval or classification. Given two
+vectors ⃗
+A and ⃗
+B, the cosine similarity is defined as:
+⃗ ⃗
+⃗ B)
+⃗ = A·B
+(1)
+cosine_similarity(A,
+⃗
+⃗
+∥A∥∥B∥
+where:
+⃗ ·B
+⃗ is the dot product of vectors;
+• A
+⃗
+⃗ are the Euclidean norms (magnitudes) of
+• ∥A∥ and ∥B∥
+the vectors.
+Cosine similarity is used to estimate the similarity between
+two vectors based on their respective angles, as shown in
+Equation (1). The outcome is -1 (totally opposite) to 1
+(exactly the same), and 0 means that the results are orthogonal
+(similarity nonexistent). Although the Vector Handler relies
+on semantic embeddings and cosine similarity to measure
+the alignment between content and preset categories, it is
+simply not as deep as it may be required to be, in order
+to capture the details and specifics of human language. The
+implication of this weakness is that contextually appropriate
+aspects can be missed by the vector-based method, and
+29507
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+therefore less accurate and less contextually sensitive results
+can be obtained. The advanced experience of the language,
+semantics, and context of the LLM allows it to perform a
+much more fine-grained and nuanced classification. It can
+pick up on delicate variations in meaning, tone, and intent
+that are perhaps less evident with the vector-based approach.
+For instance, a sentence may look neutral in vector similarity
+analysis, but when analyzing it using the LLM, it could be
+marked as having hidden hate speech or violence because
+of the context. This makes the LLM Handler much more
+suitable to use with intricate content and to give the
+appropriate percentage of categories. The Vector Handler
+is more effective in regards to speed since it computes
+with pre-defined semantic embeddings and can thus provide
+answers quicker, but it is likely to lose meaning and context.
+In contrast, the LLM Handler will be slower because of
+its more advanced processing, yet it is better at providing
+a richer contextualized analysis that presents more subtle
+information. Thus, the Vector Handler provides rapid and
+initial classification, and the LLM Handler provides more
+specific and subtle evaluation. These two methods together
+offer a total solution to the detection and categorization of
+explicit content.
+K. MODEL PERFORMANCE EVALUATION SETUP
+
+In this paper, we ran benchmarking over a manually gathered
+dataset with more than 6,000 items that included 1,500 items
+of each of the four types of media: audio, video, image, and
+text. Benchmarking was run on an 8 GB RAM simple setup
+with an Intel 10th Gen i3 CPU. We used this as a setup to test
+the performance of the new LLM-based pipeline compared to
+currently employed vector-based pipeline for explicit content
+detection on various media types. The main goal of this
+benchmarking task was to determine how effectively the
+LLM-based method surpasses the vector-based pipeline in
+accuracy. To enable this, a ground truth dataset of 6,000
+mixed data items was manually prepared. This ground truth
+acted the standard for measuring the accuracy of both
+pipelines. Through comparison of both systems’ output with
+the manually labeled ground truth, we were able to quantify
+and compare their performance.
+The results obtained, were collected systematically and
+organized in a tabular format, in a CSV file, for thorough
+analysis. Each entry in the CSV corresponds to a unique
+file checked for several explicit content categories per media
+type, i.e., images (IMG), audio (AUDIO), and video (VID).
+For each pair of file and category, the table contains the
+predicted scores computed by both pipelines (LLMScore
+and Vector-Score), the human-labeled Ground-Truth score
+(between 0 and 100), and binary labels obtained from
+predefined classification thresholds (GT Label, LLM Label,
+Vector Label). Further metadata like file name, media type,
+model inference time (LLM-Time, Vector-Time), and file size
+was also tracked to judge efficiency in addition to accuracy.
+29508
+
+IV. RESULTS AND DISCUSSION
+A. EVALUATION FRAMEWORK
+
+Every file, in the CSV, was analyzed in depth under
+the pre-defined explicit categories. For instance, the file
+500079900059 446 was analyzed under fifteen explicit categories, including- body shaming, child abuse and exploitation, cyberbullying, and harassment. In every instance, the
+system generated both a continuous severity score and a
+binary classification. In the instance of child abuse and
+exploitation, the LLM estimated a score of 89.55 against a
+ground truth of 84, whereas the vector-based model estimated
+100. Both models correctly marked the content as explicit
+(label = 1), but with extreme differences in processing
+time, with LLM taking around 8.36 seconds compared to
+0.63 seconds for the vector model. Conversely, in a lowerseverity case such as harassment, the ground truth was 19,
+and both models properly indicated that it is explicit but
+misestimated its severity score quite widely (45.58 for the
+vector model against the LLM’s 21.61).
+The Table 4 shown below, presents the samples, as categorised by various categories (viz, SEM- Sexually Explicit
+Material; VT- Violence and Terrorism; SHS- Self Harm
+and Suicide; CAE- Child Abuse and Exploitation; RSRacial Slurs; HS- Hate Speeches; SA-Substance Abuse; BSBodyshaming; HC-Homophobic Content; TC- Transphobic
+Content; SC- Sexist Content; H-Harassment; CB- Cyberbullying; MFN- Misinformation and Fake News; IPV- Invasive
+Privacy Violation tested separately by LLM(Large Language
+Model) and VEC (Vector-based pipeline)). For proper
+formulation and results evaluation, the original CSV file was
+pre-processed to form binary labels for classification. Entries
+where groundtruth is 0 were marked as 0 (non-explicit),
+and all other non-zero groundtruth values (from 1 to 100)
+were assigned to 1 (explicit). Moreover, LLM-based, and
+vector-based predictions;presented as percentage scores;were
+compared to a set threshold. If the score was within about
+16% of the groundtruth value, it was determined accurate
+(label 1); otherwise, labeled as 0.
+In order to address the weaknesses of using an arbitrary
+agreement threshold, a sensitivity analysis was conducted
+where tolerance margin was varied sequentially between
+10 and 20. This analysis made it possible to evaluate the effect
+of various levels of tolerance in the outcome of agreement
+and avoided the selection of a threshold that artificially
+inflates performance. On this assessment a conservative and
+methodologically appropriate operating point, factoring in
+a ±16% range of magnitude, was chosen, since this offers
+the right balance between absorbing minimal amounts of
+numerical variance, naturally produced by model scoring
+variability, and avoiding overly lenient agreement criteria that
+could mask meaningful differences. It is important to note
+that there was no significant difference in comparative trends
+between the experimental conditions under all the tolerances
+examined, suggesting that the use of the ±16% selection does
+not present a material bias to the results. Hence the strength
+
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+TABLE 4. Analyzed samples scores for image audio & video.
+
+of the presented findings is maintained and inferences can be
+seen as characteristic of actual model behaviour as opposed
+to threshold tuning effects.
+This structured result recording approach allowed for
+fine-grained, category-wise analysis across modalities and
+metrics. It acted as the basis for our later statistical analysis,
+allowing us to calculate not only typical classification metrics
+(like Accuracy, Precision, Recall, and ROC AUC) but also
+regression oriented measures such as Mean Absolute Error
+(MAE), Mean Squared Error (MSE), Pearson and Spearman
+correlations, and R2 . The capability to monitor both categorical and continuous outputs between categories gave useful
+information about not only whether the model identified
+explicit content, but how accurately it estimated its intensity
+which is a critical feature for real-world content moderation
+systems. This section, now, provides a comparative study
+of two different pipelines employed for identifying explicit
+content, one based on LLM-based classification and the
+other based on Vector Embedding-based approaches. The
+performance of both methods is compared to determine their
+effectiveness in detecting harmful or sensitive content under
+different contexts. Each approach is assessed with universally
+accepted performance measures, viz Accuracy, Precision,
+Recall, Fall Positive Rate (FPR), and Receiver Operating
+Curve (ROC) to offer a complete understanding of their
+trustworthiness and practical applicability.
+B. RULE-BASED KEYWORD BASELINE
+
+In addition to the embedding-based similarity baseline,
+we consider traditional rule-based moderation approaches
+VOLUME 14, 2026
+
+as a conceptual non-neural baseline. Such systems typically
+rely on curated lexicons of category-specific keywords
+and regular expression patterns spanning sexually explicit
+content, hate speech, self-harm, extremist references, and
+abusive language. Content is flagged based on the presence
+of predefined high-severity terms within extracted textual
+representations, including OCR-derived text for images and
+ASR-generated transcripts for audio and video.
+While rule-based systems are not evaluated as a standalone
+experimental baseline in this work, they are discussed to
+contextualize the proposed system relative to widely used
+heuristic moderation practices. These approaches are known
+to exhibit high precision for explicit keyword-triggered cases
+but suffer from limited recall and poor generalization to
+implicit, contextual, and multimodal expressions of harmful
+content. This comparison highlights the motivation for
+semantic and reasoning-driven moderation pipelines such as
+SHIELD.
+C. STATISTICAL VALIDATION AND ROBUSTNESS
+
+To assess whether the observed performance improvements of SHIELD over the baseline are robust to sampling variability, statistical validation was conducted using
+bootstrap-based confidence interval estimation. Bootstrap
+resampling is a distribution-free technique that is widely used
+in supervised learning evaluation when repeated experimental
+runs or full predictive distributions are unavailable. This
+approach enables estimation of metric uncertainty and
+stability while avoiding assumptions about underlying data
+distributions.
+29509
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+Specifically, 95% confidence intervals (CI) were computed for key evaluation metrics by generating 1,000
+bootstrap resamples of the test set with replacement and
+re-evaluating both pipelines on each iteration. This procedure
+provides an empirical assessment of variability across
+resampled datasets and supports robust comparison between
+methods.
+The bootstrap analysis confirms the stability and robustness of SHIELD’s performance across metrics. For accuracy,
+SHIELD achieved a mean score of 93.32% with a 95% CI of
+[92.1%, 94.4%], whereas the vector-based baseline achieved
+67.81% with a 95% CI of [65.5%, 70.1%]. Similarly,
+SHIELD attained an F1-score of 0.84 (95% CI: [0.82, 0.86]),
+substantially exceeding the baseline F1-score of 0.55 (95%
+CI: [0.52, 0.58]). Comparable stability trends were observed
+for error-based metrics such as MAE and MSE.
+Importantly, the confidence intervals for SHIELD and the
+baseline exhibit no overlap across the evaluated metrics,
+indicating that the observed performance differences are
+unlikely to arise from sampling variability alone. This
+provides strong statistical evidence that the improvements
+introduced by LLM-based semantic reasoning are systematic and robust, rather than incidental effects of dataset
+composition. Given the scale of evaluation involving over
+6,000 multimodal samples and the consistency of gains
+across content categories and modalities, the observed
+reductions in error and variance reflect practically meaningful
+improvements in moderation performance. The application of
+additional parametric inferential tests is identified as future
+work as more fine-grained per-sample experimental records
+are maintained.
+D. CLASSIFICATION OF LLM BASED PIPELINE
+
+The LLM-based pipeline demonstrates a very high performance, with an accuracy of 93.32%, which speaks to its
+ability to properly distinguish between explicit and nonexplicit content. The Precision (83.92%) is an indicator of
+the high confidence in its positive predictions, which means
+that the content it marks as explicit is precisely highly likely
+to be so. Equally striking is the Recall (83.91%), which
+is the model’s ability to find an overwhelming proportion
+of explicit instances without significant supervision. This
+precision-recall trade-off is extremely important in crucial
+tasks, including content moderation, where trade-offs simply
+cannot be allowed for and both false positives and false
+negatives are severe penalties. The fact that the FPR (4.17) is
+low, i.e. to a large extent, the model did not mislabel harmless
+material as explicit, but an ROC of 0.8391 shows that
+the model exhibited spectacular displays of discriminability.
+In general, the LLM pipeline is extremely promising in
+contextual understanding and semantic processing and would
+be functional in sensitive and mass-scale moderation systems
+where accuracy and comprehensiveness cannot be sacrificed.
+The metrics and performance analysis adopted in this
+case (Accuracy, Precision, Recall, FPR, ROC) are in line
+with the normal practice of binary classification tasks on
+29510
+
+content moderation pipelines. The particular configuration
+of scoring-in which we prompt an LLM with contextual
+enriched text, and it makes graded probability estimates in
+various explicit content categories, itself-is an instance of a
+custom-designed mechanism in our framework. To the best
+of our understanding, no existing literature incorporates the
+same structure as developing continuous classification in this
+field using LLM with the same structure or benchmarking
+process. Figure 10(a) and Figure 10(b) depict the confusion
+matrices illustrating the performance of classification of
+the LLM and Vector based pipeline. The model has a
+high count of True Negatives (TN) with 68,560 nonexplicit instances properly identified and True Positives
+(TP) with 15,492 explicit instances properly classified. False
+Positives (FP) and False Negatives (FN) are comparatively
+lesser, reflecting good precision and recall in identifying
+explicit content. Differences in total sample counts between
+(a) and (b) arise from pipeline-specific preprocessing and
+filtering; both matrices are computed on the same underlying
+dataset.
+E. CLASSIFICATION OF VECTOR BASED PIPELINE
+
+As compared to the vector-based pipeline, which has an
+overall accuracy of 67.81%, the LLM-based approach has
+much higher accuracy. While its precision (86.04%) is
+slightly better;meaning that its positive predictions are mostly
+correct;it is at the expense of an extremely low recall
+(40.19%). That is, the model misses nearly 60% of explicit
+content, which represents a critical threat in real-world
+applications. The high false negative rate indicates a bias
+to under-classify content, thus enabling potentially injurious
+material to go undetected. Furthermore, the ROC measure of
+0.4019 significantly below satisfactory thresholds illuminates
+the model’s limited ability to discriminate between the two
+classes, which makes it unfit for subtle classification tasks.
+Although this method may provide computational efficacy or
+quicker inference time, it grossly underperforms in detecting
+explicit content comprehensively, rendering it inappropriate
+for deployment in scenarios requiring strict content scrutiny.
+Although our pipeline is based on semantic similarity
+thresholds, which is rooted in traditional vector-space models
+and cosine similarity (as in [24]) the classification itself is
+also designed specifically. The category-based vector anchors
+and logic of thresholding were trained with the help of
+a proprietary dataset and have not been borrowed by the
+existing scoring systems. But conceptually our method is
+based on similarity-based ranking systems, including the one
+described by Li et al. [35] in combining varied evaluation
+measures and normalization schemes of semantic proximity
+scoring. As depicted in Figure 10(a) the confusion matrix
+illustrates the performance of the vector-based pipeline,
+showing 43,454 true negatives, 17,534 true positives, 2,831
+false positives, and 26,180 false negatives. The results suggest
+a relatively higher rate of missed explicit content compared
+to the LLM-based pipeline, indicating potential room for
+improvement in sensitivity.
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 10. Confusion matrix showing vector-based and LLM-based pipeline.
+
+F. COMPARATIVE ANALYSIS AND IMPLICATIONS
+
+The empirical data shows vividly that the LLM-based
+pipeline is superior in terms of virtually all performance metrics. Its capability of accurately and consistently interpreting
+context-rich, implicit cues in text or multimedia data sets it
+apart with traditional embedding-based methods, which tend
+to be based on surface level feature representation.
+The LLM pipeline is a scalable and balanced system that
+is skilled at reducing false positives and false negatives.
+Although lightweight, the Vector-based pipeline is not
+as semantically rich as required to perform a successful
+classification in the real world with complex situations.
+The trade-off between coverage (recall) and correctness
+(precision) could not be ignored in the context of content
+moderation, particularly, with sensitive or explicit content.
+Failing to detect explicit content (low recall) compromises user safety, while over-flagging harmful content (low
+precision) undermines trust. These findings substantiate
+the critical role that language models play in enhancing
+safety, reliability, and fairness in automated content filtering
+systems. The LLM-based approach, with its robust contextual comprehension, emerges as the clear candidate for
+deployment in environments where accuracy, accountability,
+and ethical moderation are of paramount importance. The
+comparison between metrics, for LLM and vector- based
+pipelines, has been summarized in Table 5.
+Figure 11 provides a comprehensive comparison of the
+two pipelines across all common evaluation criteria, whereas
+Table 5 displays the values of each measure separately.
+Here, Accuracy indicates the overall proportion of correct
+predictions. Precision measures the proportion of positive
+predictions that are actually correct. Recall indicates how
+many true positives were successfully identified, and FPR
+(False Positive Rate) indicates the frequency at which
+
+VOLUME 14, 2026
+
+FIGURE 11. Radar chart depicting trade-off between LLM and vector
+pipelines.
+
+negative cases are incorrectly predicted as positive. The
+ROC (Receiver Operating Characteristic) shows the system’s
+ability to distinguish between classes across different thresholds. The radar chart shows that although the Vector-based
+pipeline is highly skewed, obtaining somewhat greater
+Precision but suffering greatly in Recall, the LLM-based
+pipeline exhibits balanced and superior performance across
+Accuracy, Precision, Recall, and ROC, with reduced FPR.
+For real-world moderation activities, where false positives
+and false negatives have significant ramifications, this
+visual contrast highlights the LLM pipeline’s robustness and
+trustworthiness.
+Figure 12 presents the ROC curve comparing the classification performance of the LLM-based and vector embeddingbased pipelines. The curve illustrates the trade-off between
+
+29511
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+G. MEAN ABSOLUTE ERROR (MAE)
+
+Mean Absolute Error (MAE), as discussed in [27], is a
+measure of the predictive error used to sum up all prediction
+errors irrespective of their direction. It gives a convenient,
+but highly interpretable, measure of the extent to which the
+explicitness scores predicted by a model are close to the actual
+ones, as illustrated by Equation (2).
+n
+
+MAE =
+
+1X
+|yi − ŷi |
+n
+
+(2)
+
+i=1
+
+FIGURE 12. ROC curve comparing the performance of LLM-based and
+vector embedding-based classification methods.
+
+the true positive rate (sensitivity) and false positive rate for
+each method.
+Figure 13 presents a bar plot providing comparison of
+various standard metrics, reiterating LLM-based model’s
+superior performance.
+The problem of explicit content detection may also be
+imagined not just as a binary classification task, but rather
+as a regression task; because, while binary classification
+distinguishes whether or not a given content is explicit,
+binary classification gives too narrow a picture when the
+level or degree of explicitness is of importance; particularly
+for applications such as age-sensitive filtering, tiering of
+content, moderation flags, and sophisticated censorship. This
+alteration is based on the fact that explicitness is not a
+binary concept; but exists in varying degrees depending
+on the context, the semantics, tone and intensity. The
+system can give advanced levels of severity rather than
+crude labels by reverse computing explicitness scores on a
+continuous scale (0 to 100). The semantic rich- LLM based
+pipeline and the lightweight- Vector based pipelines were
+compared to the ground-truth explicitness percentages with
+five fundamental regression metrics: Mean Absolute Error
+(MAE), Mean Squared Error (MSE), Pearson Correlation
+Coefficient, Spearman Rank Correlation, and R2 Score. All
+these measures provide a detailed rating: These can measure
+the means deviations and penalize outliers, throughout the
+demonstration of the constancy of trends and the accounting
+of variances. In this section, we provide an exhaustive,
+category and metric-wise report of the result and we discover
+the microscopic insights on the behaviour of models in
+different content-types.
+29512
+
+where:
+• n is the number of observations;
+• yi is the actual (true) value;
+• ŷi is the predicted value.
+The aggregate MAE of the LLM pipeline was extremely
+low, 3.07, indicating that, on average, its predictions had
+fallen only a little beyond three percentage points of
+the ground truth - a formidable performance imitating
+that of humans. In comparison, the vector-based machine
+learning pipeline exhibited a substantially higher MAE of
+13.57, indicating severe average deviations. Furthermore,
+the category-wise analysis highlights the superior accuracy
+and consistency of the LLM-based pipeline. The LLM
+demonstrated the highest MAE results, and predicting scores
+very closely, in case of hate speech category. It was highly
+correlated with human-labeled ground truth even in the
+case of transphobic content, which it was supported by
+its contextual awareness of identity-based subtle offences.
+Conversely, sexually explicit content and sexist content
+were the toughest for the vector pipeline, recording MA
+values of 14.03 and 13.86, respectively. The large deviations
+show the vector model’s failure to understand suggestive
+or context-dependent content where explicitness is hinted at
+instead of being explicitly stated. The above results strongly
+argue in favor of the utilization of LLMs in categories dealing
+with semantic nuances, socio-cultural sensitivities, or indirect
+use of language. The MAE scores of LLM and vector based
+pipelines, across different categories, have been summarised
+in the following Table 6.
+H. MEAN SQUARED ERROR (MSE)
+
+While MAE captures mean errors, Mean Squared Error
+(MSE) highlights error size by squaring every deviation;
+thus disproportionately punishing large errors. This has also
+been highlighted in [27]. This renders MSE an important
+measure when evaluating model safety, especially in content
+moderation systems where a handful of gross errors can be
+fatal.
+n
+1X
+(yi − ŷi )2
+(3)
+MSE =
+n
+i=1
+
+where:
+• n is the number of observations;
+• yi is the actual value;
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 13. Comparison of various metrics of classification.
+
+• ŷi is the predicted value.
+
+As shown in Equation (3), MSE penalizes larger errors
+more heavily due to the squaring of residuals, making it
+sensitive to outliers. The LLM pipeline had a consistently
+low MSE of around 15.18, not just recording accurate
+predictions but also showing stability and resilience towards
+the occurrence of huge-scale errors. Contrasting vividly,
+however, was the vector-based score system which recorded
+an exorbitantly high MSE of 345.26, an indicator of many big
+prediction mistakes occurring. This was more dramatically
+shown within sexually explicit and sexist categories with
+the category-specific MSE values highest at 363.97 and
+353.69, respectively. Such inflated penalties on errors imply
+that the vector model would either occasionally be too
+conservative or quite liberal on explicitness severity, which is
+not desirable in legal-sensitive or ethically sensitive domains.
+The low level of the MSE of the LLM between categories
+including the more difficult ones like harassment and child
+abuse underlines the improved ability of the network to
+give consistent and proportional judgment despite semantic
+vagueness or language differences. Table 7 indicates the
+comparison of the two pipelines in various explicit categories
+and how the values of the vector-based pipeline are far ahead
+in all categories.
+Observations from Figure 14:
+a) The heatmap shows that the LLM pipeline consistently
+outperforms the Vector pipeline across all three content
+categories (Sexually Explicit, Self-harm, and Others).
+b) Sexually Explicit content: LLM achieves a significant
+reduction in both MAE (0.09 → 0.04) and MSE (0.01
+→ 0.005), indicating far more reliable predictions.
+VOLUME 14, 2026
+
+TABLE 5. Comparison of standard metrics.
+
+c) Self-harm category: Errors drop from 0.05 to 0.02 in
+MAE and from 0.007 to 0.003 in MSE, demonstrating
+the LLM’s robustness in handling sensitive and subtle
+linguistic cues.
+d) Other harmful content: Even in this less frequent class,
+LLM reduces MAE from 0.04 to 0.02 and MSE from
+0.004 to 0.002, showing consistency across categories.
+The lighter color patterns for LLM cells (lower error
+values) compared to darker Vector cells highlight the overall
+reduction in error rates in an intuitive, visual manner.This
+consistency suggests that the LLM pipeline is more generalizable across multiple categories, making it a stronger choice
+for real-world moderation systems.
+I. PEARSON CORRELATION COEFFICIENT
+
+The Pearson correlation coefficient, as discussed in [27],
+evaluates the linear relationship between predicted and actual
+scores; essentially, how well the model tracks upward or
+downward trends in explicitness. It is formulated as shown
+in Equation (4):
+Pn
+i=1 (yi − y)(ŷi − ŷ)
+qP
+r = qP
+(4)
+n
+n
+2
+2
+i=1 (yi − y)
+i=1 (ŷi − ŷ)
+29513
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+TABLE 6. MAE comparison across explicit content categories.
+
+FIGURE 14. Category-wise mean absolute error (MAE) and mean squared
+error (MSE) of the vector and LLM pipelines as a heatmap.
+TABLE 7. MSE comparison across explicit content categories.
+
+where:
+• yi and ŷi are the actual value and predicted value,
+respectively;
+• y and ŷ are the mean of actual values and predicted
+values, respectively;
+• n is the number of observations.
+The LLM pipeline showed strikingly high Pearson values
+in all categories, as shown in Table 8, were invariably
+above 0.998, reflecting near-perfect linear concurrence.
+In some of the categories, such as hate speech (0.9997)
+and transphobic content (0.9995), the predictions of the
+LLM were virtually indistinguishable in direction pattern
+from actual explicitness distribution, demonstrating that the
+model has successfully acquired the semantic scaling of
+explicit vocabulary. On the other hand, the Pearson scores
+of the vector pipeline were overall lower, between 0.93 and
+0.96, with some falls in context-sensitive categories. For
+example, while the vector model worked quite well in body
+shaming (0.9619) and cyberbullying (0.9587), both of which
+tend to use more explicit or repetitive language, it did
+not fare as well in sexist and sexually explicit content,
+where tone, implication, or euphemistic language is very
+significant. These findings indicate that while vector models
+are able to catch surface-level lexical similarity, but they fail
+in reflecting the higher-order linear semantics required for
+gauging content of a finer sort.
+29514
+
+J. SPEARMAN RANK CORRELATION
+
+The Spearman correlation coefficient [27] plays a very
+important role in content moderation, where content ranking
+by severity is usually more important than having the actual
+score. Spearman, as shown in Equation (5), measures the
+monotonic relation between predicted and actual scores;
+i.e., whether the model maintains the order of explicitness
+between items.
+P
+6 ni=1 di2
+ρ =1−
+(5)
+n(n2 − 1)
+where:
+• di is the difference between the ranks of yi and ŷi ;
+• n is the number of observations.
+The LLM pipeline once again produced near-perfect
+results, with Spearman scores of above 0.9996 across most
+categories, as depicted by Table 9. This means that, even
+with slight deviations in scores, the model ranks content
+correctly every time, meaning that very explicit content
+gets prioritized for moderation or deletion. This is crucial
+for real-time platforms, where automated methods need to
+identify the most harmful content first. The LLM’s impressive
+performance in child abuse, violence, and harassment categories tells us to its contextual sensitivity and its capability
+to sense severity in addition to keywords. The vectorbased pipeline, although producing acceptable scores in
+cyberbullying (0.9853), did not achieve rank consistency in
+subjective topics. Especially with sexually explicit and sexist
+material, the Spearman scores indicate misordering, in which
+less explicit material was at times ranked ahead of more
+severe material. Rank mismatches of this nature can lead to
+an erroneous moderation hierarchy, allowing harmful content
+to go undetected while lower severity material is incorrectly
+flagged, posing a significant risk in real-time, trust-sensitive
+environments.
+K. R 2 SCORE
+
+Equation (6), as provided by [27], defines R2 measure.
+In other words, it is coefficient of determination, that
+quantifies the amount of variance in the true explicitness
+scores is accounted for by the model’s predictions. A value
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+TABLE 8. Pearson correlation across explicit content categories.
+
+TABLE 9. Spearman correlation by file name (top 10 files).
+
+of R2 approaching = 1 shows that the model is able
+to consistently generalize its learned patterns to unseen
+information.
+Pn
+(yi − ŷi )2
+2
+R = 1 − Pi=1
+(6)
+n
+2
+i=1 (yi − y)
+where:
+• yi and ŷi are the actual and predicted values, respectively;
+• y is the mean of actual values;
+• n is the number of observations.
+Again, the LLM pipeline performed better with R2 scores
+greater than 0.985 for all categories, indicating great generalization abilities. This has also been depicted in Table 10. The
+model could understand a broad variety of linguistic patterns
+and contextual cues, whether overt or implicit, and convert
+that understanding into precise severity predictions. This was
+especially clear in violence, child abuse, and harassment,
+where the character of the content tends to rely more on
+narrative structure or intent rather than on words.
+The vector pipeline, nonetheless, showed poorer generalization, with R2 values ranging around 0.70 for more
+distinct categories such as cyberbullying and body shaming
+but falling to 0.66 for sexist and sexual content. These
+values indicate a model capturing only partial variance,
+frequently oblivious to changes in tone or social subtlety.
+This weakness renders the vector model less trustworthy
+in practical applications where diversity and ambiguity of
+content prevail. The values across various standard metrics,
+VOLUME 14, 2026
+
+discussed in this section, have been summarised in the
+Table 11.
+Finally, the comparison between the two paradigms
+demonstrates a consistent and compelling narrative: the
+LLM pipeline displays clear advantage on all the necessary
+measure regardless of the testing protocol. A high reliability
+in detection with minimal over-flagging is achieved with
+the LLM model with excellent accuracy (93.32%), excellent
+precision-recall balance (83.9%), and a very low false
+positive rate. This is particularly the case in deployed
+mechanisms of moderation by which over-enforcement and
+under-enforcement would most possibly have a deleterious
+moral, juridical or experiential effects. Conversely, the
+much more precise but much lower recall (40.19%) and
+unsatisfactory AUC scores of vector-based classifier method
+indicate that it would not reliably be applicable in sensitive
+applications. When further treated as a regression based
+model, it also elevates the boundary, which gives even more
+specific insight how effectively the system perceives and
+estimates the differential degrees of explicitness. In these,
+the LLM-based pipeline outperforms the vector-based one
+in all five regression measures of MAE, MSE, Pearson,
+Spearman, and R2 , as well as, beyond just implying greater
+accuracy, but also greater consistency, preservation of trends,
+and Variance explanation. These form foundations for
+supporting context-sensitive modulation strategies such as
+severity tiering, adaptive filtering, and scaled prioritization.
+The regression results also indicate another semantic layer in
+LLMs, which can think contextually, tonally, and with subtle
+intent, something that can never be translated by vectorbased models. Both outputs support the hypothesis that
+LLMs would also be more advantageous for binary detection
+problems but also much more qualified in the environment as
+regards interpretability, granularity, and semantic value are
+of main concern. Both in its discrete classifying form and its
+continuous regression form, the LLM pipeline is the more
+sensitive, more reliable, and future-proof way to explicitly
+detecting content in dynamic and morally ambiguous media
+spheres.
+V. INDUSTRIAL ARCHITECTURE
+
+The proposed industry ready architecture, as illustrated in
+Figure 16, has a robust and scalable backend to access
+different forms of content including text, images, videos,
+and audio. This system is used to identify and rank explicit
+material with a pipeline based on a Large Language Model.
+This architecture begins at a secured API gateway which
+authenticates incoming requests in order to grant their access
+to remain secure and controlled before proceeding with the
+subsequent processing. Clients authenticate and then use a
+central Gateway API that ensures the requests are coordinated
+and the pipeline is initiated. Upon receiving a request, the
+system may access files that are already stored in a cloud
+database or uploads new data in order to maintain the data
+in an organized manner that can be easily accessed later.
+
+29515
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 15. Heatmaps showing pearson and spearman correlations by category and by file.
+
+TABLE 10. R 2 score by explicit category.
+
+TABLE 11. Summary of values across different metrics.
+
+structure. After this preparation, the respective processors
+work on these media types to find valuable patterns and
+features. Once processed, the content moves to the scoring
+module where it gets assessed against 15 fixed categories
+of explicitness. The scoring process uses the advanced
+contextual understanding of the LLM to achieve accurate
+and detailed detection even in tricky or mixed-content cases.
+The system collects these results and forwards them to
+the results-processing unit. This unit organizes and formats
+everything into a detailed API response. The architecture
+allows modularity and flexibility. It lets clients set their
+own custom thresholds to control explicit content filtering.
+It also works well with different storage options based on
+deployment needs. Clients can personalize settings and get
+responses tailored to their needs. This design shows it is
+ready for real-world use. The system builds a solid base to
+develop commercial apps. It provides a flexible and growable
+way to create safer digital spaces with LLM-driven content
+moderation using context.
+VI. ETHICAL CONSIDERATIONS AND BIAS MITIGATION
+
+When the file enters the processing system, it gets sorted
+by its type; whether it is text, image, video, or audio. The
+system sends each type through specific pre-processing units
+designed to get the content ready to analyze its meaning and
+29516
+
+The very nature of harmful-content detection systems poses
+an inherent threat to their ethics, especially with regard to
+fairness and representational bias, and the potential outcomes
+of a false classification. Because the SHIELD model is based
+on user-created multimedia content, the system should strike
+a balance between effective moderation and individual rights
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+FIGURE 16. Proposed industry ready architecture.
+
+protection and freedom of expression. In order to solve
+the problem of algorithmic bias, both pipelines were tested
+along a broad range of content types (e.g., hate speech,
+harassment, sexual content, misinformation) to make sure
+that they worked equally well with sensitive subsets.
+The application of LLMs also poses the threat of hallucination, over-generalization, and the unwanted replication of
+prejudice held in the teaching corpus that exists in society.
+In order to counteract these problems, SHIELD has used
+transparent scoring thresholds, category-oriented audits, and
+correlation processes to determine systematic differences
+between human-labeled labels and automated predictions.
+Adversarial training, fairness regularization, and human-inthe-loop calibration can be a part of future versions to ensure
+minimized harm.
+The system is geared towards supportive moderation
+and excludes autonomous penalizations. The high-impact
+decisions are supposed to be validated by human reviewers
+to avoid the spread of the fake positives or the culturally
+insensitive errors.
+VII. DATA MANAGEMENT AND PRIVACY PROTECTION
+
+The data employed in this research includes sensitive and
+possibly explicit textual, visual and audio materials. Consequently, stringent data protection and privacy maintenance
+strategies came in place. All data were anonymized and any
+personal identifiable information (PII) was stripped off before
+ingesting. Some content-level labels were only used (e.g.
+VOLUME 14, 2026
+
+explicit, non-explicit, category type), so that individual users
+cannot be re-identified.
+Experiments were carried out in secure access controlled
+environments. Raw data were never stored or transferred
+in unencrypted form or performed any external operation.
+Where legally applicable, procedures were based on the
+principles of the General Data Protection Regulation (GDPR)
+such as data minimization, purpose limitation and limited
+retention periods.
+No metadata on users, behavioral history, or inductive
+markers of identity are kept in the system. Only model outputs
+(confusion matrices, correlation measures and classification
+scores) were preserved to be analyzed. All of these measures
+ensure that SHIELD follows the ethical standards of development and the existing data-protection standards.
+VIII. DEPLOYMENT CONDITIONS, COMPUTATIONAL
+COST, AND REPRODUCIBILITY
+A. CONDITIONS OF USE
+
+The SHIELD pipeline is made to support assistive content
+moderation processes and not punitive autonomous decisionmaking. Its outputs are meant to help human reviewers detect
+the potentially harmful or explicit content on a large scale.
+For its proper use, model predictions should be interpreted
+in context and, wherever needed, be escalated to manual
+inspection.
+The system can be applied to large-scale infrastructures,
+institutions of learning and digital safety devices that have
+29517
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+large amounts of user-created multimedia data. Its application
+has to be in accordance with local laws regarding content
+management, online rights, and information privacy. The
+framework is not to be implemented in environments where
+automated misclassification may directly cause legal, social
+or personal damages without human verification.
+Moreover, in cases where there are varied cultural,
+linguistic or community norms, other fine-tuning or domain
+adaptation might be necessary. SHIELD is not a standardization of what constitutes harm, but rather a system
+of classification according to the set of data and policies
+established by the platform stakeholders.
+B. COMPUTATIONAL COST AND RESOURCE
+REQUIREMENTS
+
+The proposed system is characterized by the heavy computational cost due to the use of large language models and
+auxiliary features of audio, text, and multimodal processing.
+Modern LLMs with high parameter counts incur non-trivial
+inference costs, both in terms of API pricing and GPU
+resource consumption, which directly affects scalability
+and practical deployment. To perform text and context
+analysis, the system uses the Llama-3.3-70B model at a
+cost of $0.59 per million input tokens and 0.79 per million
+output tokens. Although individual inferences may appear
+inexpensive, high processing rates quickly add to the total
+cost, in particular in the setting when the volume of content
+can reach to millions of samples per day. Its bulky parameter
+size also requires expensive hardware (e.g., A100/H100
+GPUs in on-premise deployment) which adds to the cost
+of operation. Given that multimedia content often consists
+of audio segments, the cost of transcription may increase
+in direct proportion to dataset size. This component is
+a major contribution in recurring operation expenses in
+real-time moderation environments where the continuous
+audio streams are to be processed. Gemini 1.5 pro-002,
+primarily used for video processing, has another price
+structure, which involves text, image, and video pricing at
+$0.10 per million input tokens, and audio pricing at $0.70 per
+million tokens, in addition to output price of $0.40 per
+million output tokens. Although the costs of the model to
+work with text-based workloads are favorable, it costs more
+to execute audio and context-caching tasks, which adds to
+the total cost when using the model in multimodal analysis
+of batches and repeated processes. All in all there is an
+evident trade off between the cost of computation and the
+level of accuracy and operational efficiency. LLM-based
+scoring provides better contextual information at the cost of
+higher financial and hardware requirements, as opposed to
+more computationally cheap, yet less accurate, scoring based
+on vector based. For large-scale or continuous moderation
+platforms, this necessitates careful engineering decisions,
+such as selective invocation of LLMs, batching strategies,
+model distillation, or hybrid scoring, to maintain feasibility
+without compromising detection quality.
+29518
+
+C. REPRODUCIBILITY AND OPEN-SOURCE MODEL
+AVAILABILITY
+
+In order to be made reproducible, all models used in
+SHIELD were selected out of well-documented, broadly
+released, open-source libraries. For instance, sentencetransformer models such as all-MiniLM-L6-v2, along with
+the open-source LLMs used for evaluation, can be obtained
+through repositories such as HuggingFace; making it easier
+for researchers to reproduce these results with minimal effort,
+typically requiring only minor configuration changes.
+The pre-processing methods, i.e. content splitting, embedding generation and the utilization of vector-based scoring
+can be readily re-implemented through deterministic processes and can be re-run through publicly available libraries:
+PyTorch, Transformers, Scikit-Learn. Clear description of
+hyperparameters, scoring thresholds and evaluation protocols
+has been provided to enable reproducibility.
+Although the computational needs of the large models
+in practice surpass the capability of smaller hardware to
+reproduce the model, the pipeline can be recreated in
+simplified form using distilled or quantized models. This
+guarantees consistency with regard to methodology. The
+transparency of pipeline aids the replicability, auditability and
+scientific purity of the method in the long run.
+IX. CONCLUSION
+
+The paper offers a detailed discourse of an LLM-based
+solution in comparison with a vector-based solution to the
+problem of detecting explicit content on diverse types of
+media. The implicit message is that the LLM pipeline is
+more reliable, adaptable, and contextual compared to the
+alternative pipeline, based on vector. While vector-based
+solutions could be pretty reliable with single types of media
+but pale in comparison to LLM-based pipeline with mixed
+data due to their reliance on word embeddings and limited
+capability of making sense of the information of contexts.
+On the other hand, the LLM-based pipeline is superior as
+it incorporates a deep contextual perspective of all media
+inputs of a text, image, audio, or video with the aim of
+making more reliable and precise predictions in a spectrum of
+diverse content types. This methodology highlights the need
+for contextual knowledge in enhancing the effectiveness of
+content detection systems. Context-aware analysis is a significant feature of content detection as analysed. The pipeline
+based on the LLM manages the process of each type of
+media in the knowledge of the contexts, yielding a consistent
+and highly precise process with a diverse spectrum of types
+of media as well as of diverse content sizes. Subjecting
+each type of content to semantic awareness, the LLM-based
+solution ensures high-end performance regardless of the
+format or complexity and marks an improved development
+compared to the typical vector-based solution. Finally, the
+LLM-based solution surpasses the earlier methods based
+on vectors because it ensures more precise and reliable
+explicit material detection as well as regard for the content
+
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+of most types of media. This research illustrates the potential
+of large language models in expanding the frontier of
+content analysis of multimedia. These findings as a whole
+comprise the foundation of an industry-ready architecture,
+the SHIELD- a structured, modular solution that is destined
+to address the nuances of cross-modal content. Though born
+from research, SHIELD matches the scalability as well as
+architectural design that is called for in practical applications.
+Its methodology opens the door for intelligent safer online
+communities driven by LLM that can moderate content as
+well as understand its sense.
+A. LIMITATIONS
+
+Despite the high contextual performance observed in the
+proposed SHIELD framework with respect to a range of
+media inputs, a number of limitations still exist. The analysis
+is based on the quality and accessibility of the underlying
+dataset, which cannot possibly capture the broad range of
+harmful material found on the actual platforms. In addition,
+the pipeline implemented on the LLM is highly accurate but
+intensive to implement in terms of computational complexity
+in inference, thus limiting its feasibility as a first-stage filter
+in resource-constrained deployments. The system also has
+dependency on pretrained models whose performance can
+vary depending on domain changes or vague contents. These
+aspects indicate where the existing work can be reinforced.
+This misclassification was prevalent in situations where
+explicit lexical markers were not provided, indicating that the
+vector-based pipeline relied on semantic similarity at surfacelevel, which resulted in over- and under-estimation of severity
+scores. The current pipeline does not retain per-sample intermediate distributions necessary for retrospective inferential
+statistical testing; future versions will store these elements to
+enable paired t-tests, Wilcoxon tests, and ANOVA.
+Conversely, the LLM-based pipeline had more stable and
+consistent predictions, lower MAE and MSE in most of the
+categories, especially those that involve euphemisms, indirect
+citation, or cross-modal contextual cues. Most of the LLM
+false negatives were connected with highly subtle or poorly
+indicated malicious intent whereas the false positives were
+mostly found in case of highly emotional or metaphorical
+language.
+Comprehensively, this qualitative inspection agrees with
+the quantitative results and sheds further light on the nature
+of the errors and failure modes in the two pipelines.
+We acknowledge that empirical comparisons with CLIPgrounded pipelines, FROMAGe, and retrieval-and-rerank
+moderation systems would further strengthen the evaluation.
+Such methods are however more suited to an image-text or
+text-only environment and are not native to audio and video
+contextualization. To have them work in a uniform manner
+across four heterogeneous modalities would need significant
+architectural adjustment and is beyond the scope of this paper.
+In this respect, we take these approaches as conceptual and
+architectural foundations and set our comparison at the design
+
+VOLUME 14, 2026
+
+and capability level instead of conducting direct empirical
+measurements.
+B. FUTURE PROSPECTS
+
+The SHIELD pipeline can also be extended in the future
+by fine-tuning domain-specific LLM to be more sensitive to
+subtle or emergent forms of explicit content. It would be more
+globally applicable by incorporating multilingual and culturally varied samples into the dataset. In addition, the search
+of model compression mechanisms, including distillation and
+quantization, can help decrease the computational load and
+allow scaling to large size. Advances in multimodal fusion
+e.g. further convergence of audio, video, and text cues, are
+another promising direction of augmenting robustness and
+contextual accuracy. All of these improvements can bring
+SHIELD to a more efficient, scalable, and realistic-world
+moderation system.
+X. ERROR ANALYSIS
+
+As an extension of the quantitative assessment, we used
+focused qualitative analysis of errors, by content categories. We observed that the vector-based pipeline exhibited
+higher variance in categories involving implicit, contextual,
+or indirect cues (e.g., harassment, sexist language, self-harm–
+related content).
+APPENDIX A
+A. IMPLEMENTATION ASSUMPTIONS, SCALABILITY, AND
+REPRODUCIBILITY
+1) LLM EXECUTION ASSUMPTIONS
+
+SHIELD uses large language models (LLMs) as semantic
+reasoning modules instead of using them as overall classifiers. All LLM invocations use fixed prompt templates,
+documented model versions, and deterministic decoding
+settings (e.g., low temperature) to minimize stochastic
+variability. This design aligns with best practices in reproducible research practices, where controlling prompting and
+decoding parameters is essential for achieving a consistent behavior. Importantly, LLM usage within SHIELD is
+modular and replaceable at the interface level: alternative
+LLMs or embedding models can be substituted without
+altering the core pipeline logic, requiring only prompt-level
+or configuration-level adjustments rather than architectural
+changes.
+2) SCALABILITY CONSIDERATIONS
+
+The SHIELD pipeline is explicitly designed for scalable
+deployment. Modality-specific preprocessing stages, such
+as speech-to-text, OCR, and visual frame captioning, can
+be batched, parallelized, and distributed independently of
+the semantic reasoning stage. Computationally intensive
+components can thus be scaled horizontally, while LLM
+inference can be rate-limited, cached, or reused for repeated
+or similar content. This architectural decoupling mirrors
+strategies adopted in large-scale moderation systems to
+29519
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+balance throughput, latency, and semantic depth, enabling
+SHIELD to operate over large content streams with controllable cost and performance.
+3) REPRODUCIBILITY
+
+All preprocessing steps, semantic normalization procedures,
+explicitness scoring mechanisms, and evaluation metrics
+are fully specified. Dataset splits, annotation protocols,
+prompt templates, and model configurations are documented
+to support reproducibility. While certain components rely
+on third-party models or APIs, SHIELD’s modular design
+ensures that functionally equivalent open-source alternatives
+can be substituted through configuration or prompt-level
+changes without altering the core methodology. To further
+support reproducible experimentation, preprocessing modules, scoring functions, prompt templates, and evaluation
+scripts will be documented or released upon publication,
+enabling replication and extension across datasets and model
+configurations.
+COMPLIANCE WITH ETHICAL STANDARDS
+
+This research did not involve human or animal participation.
+All authors have checked and agreed on the submission.
+CONFLICT OF INTEREST
+
+All authors have participated in (a) conception and design,
+analysis, and interpretation of the data; (b) drafting the article
+or revising it critically for important intellectual content; and
+(c) approval of the final version. This manuscript has not been
+submitted to, nor is it under review at, another journal or
+other publishing venue. All authors have no affiliation with
+any organization with a direct or indirect financial interest in
+the subject matter discussed in the manuscript. All authors
+declare that they have no conflict of interest.
+DATA AVAILABILITY STATEMENT
+
+The data and code that support the findings of this study
+are available at https://github.com/Ampli-xD/SHIELD. The
+dataset used in the experimentation was self-created from
+public sources. Due to the explicit nature of the compiled
+dataset, it is not publicly released.
+REFERENCES
+[1] M. Flood, ‘‘The harms of pornography exposure among children and young
+people,’’ Child Abuse Rev., vol. 18, no. 6, pp. 384–400, Nov. 2009, doi:
+10.1002/car.1092.
+[2] E. W. Owens, R. J. Behun, J. C. Manning, and R. C. Reid, ‘‘The impact of
+internet pornography on adolescents: A review of the research,’’ Sexual
+Addiction Compulsivity, vol. 19, nos. 1–2, pp. 99–122, Jan. 2012, doi:
+10.1080/10720162.2012.660431.
+[3] C. Zhu, S. Huang, R. Evans, and W. Zhang, ‘‘Cyberbullying among
+adolescents and children: A comprehensive review of the global
+situation, risk factors, and preventive measures,’’ Frontiers Public
+Health, vol. 9, Mar. 2021, Art. no. 634909, doi: 10.3389/fpubh.2021.
+634909.
+[4] E. Larrañaga, S. Yubero, A. Ovejero, and R. Navarro, ‘‘Loneliness, parentchild communication and cyberbullying victimization among Spanish
+youths,’’ Comput. Hum. Behav., vol. 65, pp. 1–8, Dec. 2016, doi:
+10.1016/j.chb.2016.08.015.
+
+29520
+
+[5] M. Franco, O. Gaggi, and C. E. Palazzi, ‘‘Analyzing the use of large
+language models for content moderation with ChatGPT examples,’’ in
+Proc. 3rd Int. Workshop Open Challenges Online Social Netw., Sep. 2023,
+pp. 1–8, doi: 10.1145/3599696.3612895.
+[6] T. S. Murugan and V. S. P. Kalyan, ‘‘Protecting children from harmful
+audio content: Automated profanity detection from English audio in songs
+and social-media,’’ Int. J. Recent Innov. Trends Comput. Commun., vol. 11,
+no. 6, pp. 39–44, Jul. 2023, doi: 10.17762/ijritcc.v11i6.6770.
+[7] T. Thi Nguyen, C. Wilson, and J. Dalins, ‘‘Fine-tuning llama 2 large
+language models for detecting online sexual predatory chats and abusive
+texts,’’ 2023, arXiv:2308.14683.
+[8] D. Kumar, Y. A. AbuHashem, and Z. Durumeric, ‘‘Watch your language:
+Investigating content moderation with large language models,’’ in Proc.
+Int. AAAI Conf. Web Social Media, vol. 18, 2024, pp. 865–878, doi:
+10.1609/icwsm.v18i1.31358.
+[9] A. Qamar Bhatti, M. Umer, S. H. Adil, M. Ebrahim, D. Nawaz, and F.
+Ahmed, ‘‘Explicit content detection system: An approach towards a safe
+and ethical environment,’’ Appl. Comput. Intell. Soft Comput., vol. 2018,
+pp. 1–13, Jul. 2018, doi: 10.1155/2018/1463546.
+[10] T. Caselli, V. Basile, J. Mitrović, I. Kartoziya, and M. Granitzer, ‘‘I feel
+offended, don’t be abusive! Implicit/explicit messages in offensive and
+abusive language,’’ in Proc. 12th Lang. Resour. Eval. Conf. (LREC), 2020,
+pp. 6193–6202.
+[11] S. MacAvaney, H.-R. Yao, E. Yang, K. Russell, N. Goharian, and
+O. Frieder, ‘‘Hate speech detection: Challenges and solutions,’’ PLoS
+ONE, vol. 14, no. 8, Aug. 2019, Art. no. e0221152, doi: 10.1371/journal.pone.0221152.
+[12] J. A. Marcial-Basilio, G. Aguilar-Torres, G. Sánchez-Pérez, L. K. ToscanoMedina, and H. M. Pérez-Meana, ‘‘Detection of pornographic digital
+images,’’ Int. J. Comput., vol. 5, no. 2, pp. 298–305, 2011.
+[13] A. Vaglio, R. Hennequin, M. Moussallam, G. Richard, and
+F. D’Alché–Buc, ‘‘Audio-based detection of explicit content
+in music,’’ Proc. IEEE ICASSP, Mar. 2020, pp. 526–530, doi:
+10.1109/ICASSP40776.2020.9054278.
+[14] R. Su, J. R. John, and P.-I. Lin, ‘‘Machine learning-based prediction for
+self-harm and suicide attempts in adolescents,’’ Psychiatry Res., vol. 328,
+Oct. 2023, Art. no. 115446, doi: 10.1016/j.psychres.2023.115446.
+[15] S. M. Kargutkar and V. Chitre, ‘‘A study of cyberbullying detection
+using machine learning techniques,’’ in Proc. IEEE ICCMC, Mar. 2020,
+pp. 734–739, doi: 10.1109/ICCMC48092.2020.ICCMC-000137.
+[16] S. Abro, S. Shaikh, Z. Hussain, Z. Ali, S. Khan, and G. Mujtaba,
+‘‘Automatic hate speech detection using machine learning: A comparative
+study,’’ Int. J. Adv. Comput. Sci. Appl., vol. 11, no. 8, pp. 1–8, 2020, doi:
+10.14569/ijacsa.2020.0110861.
+[17] N. S. Mullah and W. M. N. W. Zainon, ‘‘Advances in machine learning
+algorithms for hate speech detection in social media: A review,’’ IEEE
+Access, vol. 9, pp. 88364–88376, 2021.
+[18] H. Chin, J. Kim, Y. Kim, J. Shin, and Mun. Y. Yi, ‘‘Explicit content
+detection in music lyrics using machine learning,’’ in Proc. IEEE Int.
+Conf. Big Data Smart Comput. (BigComp), Jan. 2018, pp. 517–521, doi:
+10.1109/BIGCOMP.2018.00085.
+[19] H. Qiu, S. Zhang, H. He, A. Li, and Z. Lan, ‘‘Facilitating pornographic text
+detection for open-domain dialogue systems via knowledge distillation of
+large language models,’’ 2024, arXiv:2403.13250.
+[20] K. Park, M. Jae Baik, Y. Hwang, Y. Shin, H. Lee, R. Lee, S. Min Lee,
+J. Young Hannah Sun, A. Rah Lee, S. Yeun Yoon, D.-h. Lee, J. Moon, J.
+Bak, K. Cho, J.-W. Paik, and S. Park, ‘‘Harmful suicide content detection,’’
+2024, arXiv:2407.13942.
+[21] C. M. S. Steel, ‘‘Artificial intelligence and CSEM–A research agenda,’’
+Child Protection Pract., vol. 2, Aug. 2024, Art. no. 100043, doi:
+10.1016/j.chipro.2024.100043.
+[22] M. Gao, X. Hu, X. Yin, J. Ruan, X. Pu, and X. Wan, ‘‘LLM-based NLG
+evaluation: Current status and challenges,’’ Comput. Linguistics, vol. 51,
+no. 2, pp. 661–702, Jun. 2025.
+[23] N. Arabzadeh and C. L. A. Clarke, ‘‘Benchmarking LLM-based relevance
+judgment methods,’’ 2025, arXiv:2504.12558.
+[24] A. Singhal, ‘‘Modern information retrieval: A brief overview,’’ IEEE Data
+Eng. Bull., vol. 24, no. 4, pp. 35–43, Apr. 2001.
+[25] T. Mikolov, K. Chen, G. Corrado, and J. Dean, ‘‘Efficient estimation of
+word representations in vector space,’’ 2013, arXiv:1301.3781.
+[26] J. Pennington, R. Socher, and C. Manning, ‘‘Glove: Global vectors for
+word representation,’’ in Proc. Conf. Empirical Methods Natural Lang.
+Process. (EMNLP), 2014, pp. 1532–1543.
+
+VOLUME 14, 2026
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+[27] O. Rainio, J. Teuho, and R. Klén, ‘‘Evaluation metrics and statistical tests
+for machine learning,’’ Sci. Rep., vol. 14, no. 1, Mar. 2024, Art. no. 6086.
+[28] T. Tang, Y. Wu, Y. Wu, L. Yu, and Y. Li, ‘‘VideoModerator: A risk-aware
+framework for multimodal video moderation in e-commerce,’’ IEEE Trans.
+Vis. Comput. Graphics, vol. 28, no. 1, pp. 846–856, Jan. 2022.
+[29] J. Y. Koh, R. Salakhutdinov, and D. Fried, ‘‘Grounding language models
+to images for multimodal inputs and outputs,’’ in Proc. ICML, 2023,
+pp. 17283–17300.
+[30] H. Liang, J. Shi, X. Shen, Z. Wang, V. Wen, A. Mehrani, Z. Chen,
+Y. Wu, and Z. Zhang, ‘‘Embedding-based retrieval in multi-modal content
+moderation,’’ in Proc. 48th Int. ACM SIGIR Conf. Res. Develop. Inf. Retr.,
+Jul. 2025, pp. 4264–4268.
+[31] B. Céspedes-Sarrias, C. Collado-Capell, P. Rodenas-Ruiz, O. Hrynenko,
+and A. Cavallaro, ‘‘MM-HSD: Multi-modal hate speech detection in
+videos,’’ 2025, arXiv:2508.20546.
+[32] F. K. Saddozai, S. K. Badri, D. Alghazzawi, A. Khattak, and M. Z. Asghar,
+‘‘Multimodal hate speech detection: A novel deep learning framework
+for multilingual text and images,’’ PeerJ Comput. Sci., vol. 11, p. e2801,
+Apr. 2025.
+[33] P. Jha, R. Jain, K. Mandal, A. Chadha, S. Saha, and P. Bhattacharyya,
+‘‘MemeGuard: An LLM and VLM-based framework for advancing content
+moderation via meme intervention,’’ in Proc. 62nd Annu. Meeting Assoc.
+Comput. Linguistics, 2024, pp. 8084–8104.
+[34] A. Bonagiri, L. Li, R. Oak, Z. Babar, M. Wojcieszak, and A. Chhabra,
+‘‘Towards safer social media platforms: Scalable and performant fewshot harmful content moderation using large language models,’’ 2025,
+arXiv:2501.13976.
+[35] P. Li, C. Burges, and Q. Wu, ‘‘Learning to rank using classification
+and gradient boosting,’’ in Proc. Adv. Neural Inf. Process. Syst., 2008,
+pp. 897–904.
+[36] J. Yuan, Y. Yu, G. Mittal, M. Hall, S. Sajeev, and M. Chen, ‘‘Rethinking
+multimodal content moderation from an asymmetric angle with mixedmodality,’’ in Proc. IEEE/CVF Winter Conf. Appl. Comput. Vis. (WACV),
+Jan. 2024, pp. 8517–8527.
+[37] G. A. Koushik, H. Treharne, and D. Kanojia, ‘‘TANDEM: Temporal-aware
+neural detection for multimodal hate speech,’’ 2026, arXiv:2601.11178.
+[38] A. Li, W. Jin, J. Tong, P. Qin, W. Li, and G. Lu, ‘‘Towards trustworthy
+multimodal moderation via policy-aligned reasoning and hierarchical
+labeling,’’ 2025, arXiv:2508.03296.
+[39] S. Cui, Q. Zhang, X. Ouyang, R. Chen, Z. Zhang, Y. Lu, H. Wang, H.
+Qiu, and M. Huang, ‘‘ShieldVLM: Safeguarding the multimodal implicit
+toxicity via deliberative reasoning with LVLMs,’’ 2025, arXiv:2505.14035.
+[40] K. Maity, A. S. Poornash, S. Saha, and P. Bhattacharyya, ‘‘ToxVidLM: A
+multimodal framework for toxicity detection in code-mixed videos,’’ 2024,
+arXiv:2405.20628.
+[41] X. Liu, Y. Zhu, Y. Lan, C. Yang, Y. Qiao, and Q. Yu, ‘‘MM-safetybench:
+A benchmark for safety evaluation of multimodal large language models,’’
+in Proc. ECCV, 2023, pp. 386–403.
+[42] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal,
+G. Sastry, A. Askell, P. Mishkin, J. Clark, G. Krueger, and I. Sutskever,
+‘‘Learning transferable visual models from natural language supervision,’’
+in Proc. ICML, 2021, pp. 8748–8763.
+[43] J. Li, D. Li, C. Xiong, and S. Hoi, ‘‘BLIP: Bootstrapping language-image
+pre-training for unified vision-language understanding and generation,’’
+2022, arXiv:2201.12086.
+[44] L. Harold Li, M. Yatskar, D. Yin, C.-J. Hsieh, and K.-W. Chang,
+‘‘VisualBERT: A simple and performant baseline for vision and language,’’
+2019, arXiv:1908.03557.
+[45] D. Zhu, J. Chen, X. Shen, X. Li, and M. Elhoseiny, ‘‘MiniGPT-4:
+Enhancing vision-language understanding with advanced large language
+models,’’ 2023, arXiv:2304.10592.
+[46] J. Liu, R. Tong, A. Shen, S. Li, C. Yang, and L. Xu, ‘‘MemeBLIP2: A
+novel lightweight multimodal system to detect harmful memes,’’ 2025,
+arXiv:2504.21226.
+[47] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, ‘‘BERT: Pre-training
+of deep bidirectional transformers for language understanding,’’ in Proc.
+NAACL-HLT, 2019, pp. 4171–4186.
+[48] Y. Liu, M. Ott, N. Goyal, J. Du, M. Joshi, D. Chen, O. Levy, M. Lewis,
+L. Zettlemoyer, and V. Stoyanov, ‘‘RoBERTa: A robustly optimized BERT
+pretraining approach,’’ 2019, arXiv:1907.11692.
+[49] H. Touvron, T. Lavril, G. Izacard, X. Martinet, M.-A. Lachaux, T. Lacroix,
+B. Rozière, N. Goyal, E. Hambro, F. Azhar, A. Rodriguez, A. Joulin, E.
+Grave, and G. Lample, ‘‘LLaMA: Open and efficient foundation language
+models,’’ 2023, arXiv:2302.13971.
+VOLUME 14, 2026
+
+[50] A. Levi, O. Levi, S. Mishra, and J. Morra, ‘‘AI vs. Human moderators:
+A comparative evaluation of multimodal LLMs in content moderation for
+brand safety,’’ 2025, arXiv:2508.05527.
+
+DISHANT KAPOOR is currently pursuing the
+bachelor’s degree with the Bharati Vidyapeeth’s
+College of Engineering, New Delhi. He has contributed to academic research as a key contributor
+to a published work, demonstrating his capability in developing and documenting technical
+methodologies. He actively engages in bridging
+theoretical concepts with real-world applications
+through experimental AI projects, approaching
+problems with a curious and analytical mindset.
+His research interests include applied AI, automation, and answer engine
+optimization, with a focus on exploring emerging trends in intelligent
+systems and their practical implementations.
+
+KARAN AHUJA is currently pursuing the degree
+in computer science and engineering, with a
+strong research orientation in machine learning
+and data science. He has experience working with
+data systems and with observability and system
+maintainability practices. His academic interests
+include intelligent systems, data-driven modeling,
+and advanced analytical methodologies. He is
+keen to deepen his understanding of emerging
+computational paradigms and to apply rigorous,
+data-centric approaches to real-world research problems.
+
+DEEPIKA KUMAR received the Ph.D. degree
+in machine learning and bioinformatics. She is
+currently an Associate Professor and the Head
+of the Department of Computer Science and
+Engineering, Bharati Vidyapeeth’s College of
+Engineering, New Delhi. She has a rich experience
+of more than 17 years. She has two patents
+granted and published more than 30 research
+articles in various SCI, SCIE, and Scopus-indexed
+journals and conferences. She has published a
+book titled Dimensionality Reduction, Feature Extraction and Manifold
+in Machine Learning. Her research interests include machine learning,
+artificial intelligence, and bioinformatics. She received the Best Researcher
+Award consecutively for six years at the Bharati Vidyapeeth’s College of
+Engineering for her contribution in research.
+
+PAANAV PURI is currently pursuing the B.Tech.
+degree in computer science and engineering from
+the Bharati Vidyapeeth’s College of Engineering,
+New Delhi. He contributed to the current paper as
+an author. His academic interests include computer
+science fundamentals and emerging technologies.
+His primary areas of research interests include
+data science and machine learning, with a strong
+inclination over research and innovation.
+
+29521
+
+D. Kapoor et al.: SHIELD: System for Harmful Explicit-Content Identification and Evaluation
+
+SRINIVAS JANGIRALA (Member, IEEE) received
+the Ph.D. degree from the Department of
+Mathematics, IIT Kharagpur, specializing in cryptography and network securities. He is currently
+an Associate Professor in information systems and
+analytics with the Jindal Global Business School,
+O. P. Jindal Global University, India. He has
+authored 65 publications in international journals
+and conferences in his research areas, which are
+featured in reputed Scopus-indexed lists. He serves
+as a Reviewer for leading journals published by IEEE, Elsevier, Springer,
+and Emerald publishers. With over 12 years of experience in research
+and teaching, his research interests include blockchain technology and
+applications, information security, cryptocurrency, authentication protocols,
+and the Internet of Things. He featured in the list prepared by Stanford
+University/Elsevier World’s Top 2% Scientists list, from 2021 to 2025,
+in the subject field of information and communication technologies and
+networking and telecommunications.
+
+ANANDADEEP MANDAL is currently an
+Applied Mathematician with both theoretical and
+empirical interests in the field of quantitative
+finance. He also holds the position of Scotcoin
+Distinguished Chair of digital finance with
+the University of Birmingham. Apart from
+mainstream disciplinary journals, he has several
+high impact articles involving inter-disciplinary
+collaborations on health applications, leading to
+decision making by health organizations, such as
+NHS and U.K. Government. He has a keen interest in formulating strategies
+through data-driven problem solving approach. His research underpins a
+desire to learn, understand, and explain the complex dynamics of the key
+issues in the society ranging from financial economics to healthcare.
+
+VEDIKA GUPTA received the Ph.D. degree from
+the National Institute of Technology Delhi, specializing in social media sentiment analysis. She
+is currently an Associate Professor in information
+systems and analytics with the Jindal Global
+Business School, O. P. Jindal Global University,
+India. She contributes to the Machine Intelligence
+Research Laboratory, USA, and the Text Analytics
+Research Group, Banaras Hindu University, India.
+She has authored over 50 publications in reputed
+Web of Science and Scopus-indexed journals and conferences. She serves as
+a Reviewer for leading journals published by IEEE, Springer, and Elsevier,
+having reviewed more than 100 articles. With over 11 years of experience
+in research and teaching, her research interests include data mining, data
+science, sentiment analysis, emotion recognition, and AI-driven socioeconomic behavior analysis. She is a Lifetime Member of the Computer
+Society of India.
+
+29522
+
+VOLUME 14, 2026
+
+
